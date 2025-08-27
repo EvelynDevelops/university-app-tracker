@@ -16,6 +16,8 @@ import {
   SidebarTrigger,
 } from "@/components/shared/sidebar"
 import { usePathname } from 'next/navigation'
+import { Button } from '@/components/ui/Button'
+import { UsersIcon } from '@/public/icons'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -97,15 +99,47 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger />
-            <div className="h-4 w-px bg-sidebar-border" />
-            <h1 className="text-lg font-semibold">Dashboard</h1>
+        {/* Fixed Topbar */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+          <div className="flex items-center justify-between h-16 px-4">
+            {/* Left side - Sidebar trigger and Logo */}
+            <div className="flex items-center gap-4">
+              <SidebarTrigger />
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-lg">
+                  U
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                    UniTracker
+                  </h1>
+                </div>
+              </div>
+            </div>
+
+            {/* Right side - User Avatar */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:block text-sm text-gray-700 dark:text-gray-300">
+                  Student User
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 rounded-full p-0"
+                >
+                  <UsersIcon className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
           </div>
         </header>
-        <div className="flex flex-1 flex-col">
-          {children}
+
+        {/* Main content with topbar offset */}
+        <div className="pt-16">
+          <div className="flex flex-1 flex-col">
+            {children}
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>
