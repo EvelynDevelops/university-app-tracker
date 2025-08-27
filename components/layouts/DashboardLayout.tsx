@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const isActive = (href: string) => pathname === href
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <Sidebar variant="floating" collapsible="offcanvas" className="z-[60]">
         <SidebarHeader>
           <div className="flex items-center gap-2 px-2">
