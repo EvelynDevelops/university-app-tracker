@@ -1,7 +1,9 @@
 "use client"
 
+import { useState, useMemo } from 'react'
 import DashboardLayout from '@/components/layouts/DashboardLayout'
 import { UniversityCardList } from '@/components/universities'
+import UniversityFilterBar, { FilterValues } from '@/components/universities/UniversityFilterBar'
 
 export default function UniversitiesPage() {
   // Mock data for universities
@@ -98,12 +100,79 @@ export default function UniversitiesPage() {
     }
   ]
 
+  const [currentFilters, setCurrentFilters] = useState<FilterValues>({
+    search: "",
+    major: "All Majors",
+    location: "All Locations",
+    ranking: "All Rankings",
+    acceptanceRate: "All Acceptance Rates"
+  })
+
+  const [appliedFilters, setAppliedFilters] = useState<FilterValues>({
+    search: "",
+    major: "All Majors",
+    location: "All Locations",
+    ranking: "All Rankings",
+    acceptanceRate: "All Acceptance Rates"
+  })
+
+  // Filter universities based on applied filters (only when search is clicked)
+  const filteredUniversities = useMemo(() => {
+    return universities.filter(university => {
+      // Search filter
+      if (appliedFilters.search && !university.name.toLowerCase().includes(appliedFilters.search.toLowerCase())) {
+        return false
+      }
+
+      // Location filter
+      if (appliedFilters.location !== "All Locations") {
+        if (appliedFilters.location === "California" && !university.location.includes("CA")) return false
+        if (appliedFilters.location === "Massachusetts" && !university.location.includes("MA")) return false
+        if (appliedFilters.location === "Connecticut" && !university.location.includes("CT")) return false
+        if (appliedFilters.location === "New Jersey" && !university.location.includes("NJ")) return false
+      }
+
+      // Ranking filter
+      if (appliedFilters.ranking !== "All Rankings") {
+        const ranking = university.ranking
+        if (appliedFilters.ranking === "Top 5" && ranking > 5) return false
+        if (appliedFilters.ranking === "Top 10" && ranking > 10) return false
+        if (appliedFilters.ranking === "Top 20" && ranking > 20) return false
+        if (appliedFilters.ranking === "Top 50" && ranking > 50) return false
+        if (appliedFilters.ranking === "Top 100" && ranking > 100) return false
+      }
+
+      // Acceptance rate filter
+      if (appliedFilters.acceptanceRate !== "All Acceptance Rates") {
+        const rate = university.acceptanceRate
+        if (appliedFilters.acceptanceRate === "Under 5%" && rate >= 5) return false
+        if (appliedFilters.acceptanceRate === "5% - 10%" && (rate < 5 || rate > 10)) return false
+        if (appliedFilters.acceptanceRate === "10% - 20%" && (rate < 10 || rate > 20)) return false
+        if (appliedFilters.acceptanceRate === "20% - 50%" && (rate < 20 || rate > 50)) return false
+        if (appliedFilters.acceptanceRate === "Over 50%" && rate <= 50) return false
+      }
+
+      return true
+    })
+  }, [appliedFilters])
+
   const handleViewDetails = (id: string) => {
     console.log('View details for university:', id)
   }
 
   const handleApply = (id: string) => {
     console.log('Apply to university:', id)
+  }
+
+  const handleFiltersChange = (newFilters: FilterValues) => {
+    // 只更新当前筛选条件，不触发搜索
+    setCurrentFilters(newFilters)
+  }
+
+  const handleSearch = (filters: FilterValues) => {
+    // 点击搜索按钮时才应用筛选条件
+    setAppliedFilters(filters)
+    console.log('Search triggered with filters:', filters)
   }
 
   return (
@@ -119,7 +188,15 @@ export default function UniversitiesPage() {
           </p>
         </div>
 
-        {/* Filters and Search */}
+        {/* Filters */}
+        <div className="mb-6">
+          <UniversityFilterBar 
+            onFiltersChange={handleFiltersChange}
+            onSearch={handleSearch}
+          />
+        </div>
+
+        {/* Results Summary */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div>
@@ -127,18 +204,15 @@ export default function UniversitiesPage() {
                 Top Universities
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Showing {universities.length} universities
+                Showing {filteredUniversities.length} of {universities.length} universities
               </p>
-            </div>
-            <div className="flex gap-2">
-              {/* 这里可以添加筛选和搜索按钮 */}
             </div>
           </div>
         </div>
 
         {/* University Cards */}
         <UniversityCardList
-          universities={universities}
+          universities={filteredUniversities}
           onViewDetails={handleViewDetails}
           onApply={handleApply}
         />
