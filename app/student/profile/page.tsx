@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
 import AcademicProfileModal from '@/components/modals/AcademicProfileModal'
 import { Button } from '@/components/ui/Button'
+import UploadCard, { UploadItem } from '@/components/shared/UploadCard'
 
  type Profile = {
   first_name: string | null
@@ -28,6 +29,28 @@ export default function StudentProfilePage() {
   const [loading, setLoading] = useState<boolean>(true)
   const [openEdit, setOpenEdit] = useState<boolean>(false)
 
+  // documents (multi-file)
+  const [essayItems, setEssayItems] = useState<UploadItem[]>([])
+  const [transcriptItems, setTranscriptItems] = useState<UploadItem[]>([])
+  const [uploading, setUploading] = useState<boolean>(false)
+
+  const sanitize = (name: string) => name.replace(/[^a-zA-Z0-9._-]/g, '_')
+
+  const loadFiles = async (userId: string) => {
+    const supabase = supabaseBrowser()
+    const prefix = `${userId}/`
+    const { data: files } = await supabase.storage.from('student_files').list(prefix)
+    const toItem = (objName: string, kind: 'essay' | 'transcript'): UploadItem => {
+      const display = objName.replace(new RegExp(`^${kind}-`), '')
+      const { data } = supabase.storage.from('student_files').getPublicUrl(prefix + objName)
+      return { name: display, url: data.publicUrl, objectName: objName }
+    }
+    const essay = (files || []).filter(f => f.name.startsWith('essay-')).map(f => toItem(f.name, 'essay'))
+    const transcript = (files || []).filter(f => f.name.startsWith('transcript-')).map(f => toItem(f.name, 'transcript'))
+    setEssayItems(essay)
+    setTranscriptItems(transcript)
+  }
+
   const loadData = async () => {
     try {
       const supabase = supabaseBrowser()
@@ -48,6 +71,8 @@ export default function StudentProfilePage() {
 
       setProfile(p as Profile)
       setStudentProfile(sp as StudentProfile)
+
+      await loadFiles(user.id)
     } finally {
       setLoading(false)
     }
@@ -56,6 +81,39 @@ export default function StudentProfilePage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  const uploadWithKind = async (files: File[], kind: 'essay' | 'transcript') => {
+    setUploading(true)
+    try {
+      const supabase = supabaseBrowser()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      for (const file of files) {
+        const safeOriginal = sanitize(file.name)
+        const path = `${user.id}/${kind}-${safeOriginal}`
+        const { error } = await supabase.storage.from('student_files').upload(path, file, { upsert: true })
+        if (error) throw error
+      }
+      await loadFiles(user.id)
+    } catch (err: any) {
+      alert(err?.message ?? 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const deleteObject = async (objectName: string) => {
+    try {
+      const supabase = supabaseBrowser()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await supabase.storage.from('student_files').remove([`${user.id}/${objectName}`])
+      await loadFiles(user.id)
+    } catch (err: any) {
+      alert(err?.message ?? 'Delete failed')
+    }
+  }
 
   return (
     <DashboardLayout>
@@ -69,7 +127,7 @@ export default function StudentProfilePage() {
             {/* Academic Profile */}
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Your Academic Details</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">My Academic Details</h2>
                 <Button onClick={() => setOpenEdit(true)}>Edit</Button>
               </div>
               {studentProfile ? (
@@ -85,6 +143,26 @@ export default function StudentProfilePage() {
                 <div className="text-gray-600 dark:text-gray-400 text-sm">No academic profile yet. Click Edit to add yours.</div>
               )}
             </div>
+
+            {/* My Essay */}
+            <UploadCard
+              title="My Essay"
+              accept=".pdf,.doc,.docx,.md,.txt"
+              items={essayItems}
+              loading={uploading}
+              onSelect={(files) => uploadWithKind(files, 'essay')}
+              onDelete={deleteObject}
+            />
+
+            {/* My Transcript */}
+            <UploadCard
+              title="My Transcript"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              items={transcriptItems}
+              loading={uploading}
+              onSelect={(files) => uploadWithKind(files, 'transcript')}
+              onDelete={deleteObject}
+            />
           </div>
         )}
       </div>
