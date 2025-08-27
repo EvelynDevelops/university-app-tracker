@@ -1,7 +1,8 @@
 "use client"
 
 import DashboardLayout from '@/components/layouts/DashboardLayout'
-import { UniversityCardList } from '@/components/unicersities'
+import { UniversityCardList } from '@/components/universities'
+
 export default function UniversitiesPage() {
   // Mock data for universities
   const universities = [
