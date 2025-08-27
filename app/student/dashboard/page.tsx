@@ -1,105 +1,38 @@
 "use client"
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/shared/sidebar"
+import DashboardLayout from '@/components/layouts/DashboardLayout'
 
 export default function StudentDashboard() {
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex items-center gap-2 px-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              U
-            </div>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">UniTracker</span>
-              <span className="truncate text-xs">Student Portal</span>
-            </div>
+    <DashboardLayout>
+      <div className="p-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+          Student Dashboard
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Welcome to your student dashboard. Here you can track your applications and manage your university journey.
+        </p>
+        
+        {/* 这里可以添加仪表板内容 */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-card rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-2">Total Applications</h3>
+            <p className="text-3xl font-bold text-blue-600">5</p>
           </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive>
-                    <a href="/student/dashboard">
-                      <span>Dashboard</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <a href="/student/applications">
-                      <span>Applications</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <a href="/student/universities">
-                      <span>Universities</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <a href="/student/profile">
-                      <span>Profile</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <a href="/settings">
-                      <span>Settings</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <div className="flex items-center gap-2 px-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              S
-            </div>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">Student User</span>
-              <span className="truncate text-xs">student@example.com</span>
-            </div>
+          <div className="bg-card rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-2">Submitted</h3>
+            <p className="text-3xl font-bold text-green-600">3</p>
           </div>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger />
-            <div className="h-4 w-px bg-sidebar-border" />
-            <h1 className="text-lg font-semibold">Dashboard</h1>
+          <div className="bg-card rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-2">In Progress</h3>
+            <p className="text-3xl font-bold text-yellow-600">2</p>
           </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <h2>Student Dashboard Content</h2>
-          <p>This is the student dashboard page with sidebar integration.</p>
+          <div className="bg-card rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-2">Accepted</h3>
+            <p className="text-3xl font-bold text-purple-600">1</p>
+          </div>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
+    </DashboardLayout>
   )
 }

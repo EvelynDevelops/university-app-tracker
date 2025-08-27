@@ -1,7 +1,7 @@
 "use client"
 
-import { UniversityCardList } from '@/components/universities'
-
+import DashboardLayout from '@/components/layouts/DashboardLayout'
+import { UniversityCardList } from '@/components/unicersities'
 export default function UniversitiesPage() {
   // Mock data for universities
   const universities = [
@@ -99,33 +99,26 @@ export default function UniversitiesPage() {
 
   const handleViewDetails = (id: string) => {
     console.log('View details for university:', id)
-    // 这里可以添加导航到详情页面的逻辑
   }
 
   const handleApply = (id: string) => {
     console.log('Apply to university:', id)
-    // 这里可以添加申请逻辑
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Universities
-            </h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Explore top universities and their application requirements
-            </p>
-          </div>
+    <DashboardLayout>
+      <div className="p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Universities
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Explore top universities and their application requirements
+          </p>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters and Search (可以后续添加) */}
+        {/* Filters and Search */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div>
@@ -149,6 +142,6 @@ export default function UniversitiesPage() {
           onApply={handleApply}
         />
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
