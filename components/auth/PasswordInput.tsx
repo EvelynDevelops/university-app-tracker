@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Input } from '../shared/Input'
+import { Input } from '@/components/shared/Input'
 import { EyeIcon, EyeOffIcon } from '@/public/icons'
 
 interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
