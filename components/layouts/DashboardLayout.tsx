@@ -16,8 +16,6 @@ import {
   SidebarTrigger,
 } from "@/components/shared/sidebar"
 import { usePathname } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
-import { UsersIcon } from '@/public/icons'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -37,8 +35,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               U
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">UniTracker</span>
-              <span className="truncate text-xs">Student Portal</span>
+              <span className="truncate font-semibold text-lg">UniTracker</span>
             </div>
           </div>
         </SidebarHeader>
@@ -50,7 +47,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={isActive('/student/dashboard')}>
                     <a href="/student/dashboard">
-                      <span>Dashboard</span>
+                      <span>Student Dashboard</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -104,7 +101,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger />
             <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Dashboard</h1>
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Student Portal</h1>
           </div>
         </header>
 
