@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from 'react'
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +17,7 @@ import {
   SidebarTrigger,
 } from "@/components/shared/sidebar"
 import { usePathname } from 'next/navigation'
+import { supabaseBrowser } from '@/lib/supabase/helpers'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -23,8 +25,39 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname()
+  const [userProfile, setUserProfile] = useState<{
+    first_name: string | null
+    email: string | null
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const isActive = (href: string) => pathname === href
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const supabase = supabaseBrowser()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          // Get user profile from profiles table
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, email')
+            .eq('user_id', user.id)
+            .single()
+          
+          setUserProfile(profile)
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserProfile()
+  }, [])
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -68,7 +101,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={isActive('/student/profile')}>
                     <a href="/student/profile">
-                      <span>Profile</span>
+                      <span>Academic Profile</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -86,11 +119,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <SidebarFooter>
           <div className="flex items-center gap-2 px-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              S
+              {userProfile?.first_name ? userProfile.first_name.charAt(0).toUpperCase() : 'S'}
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">Student User</span>
-              <span className="truncate text-xs">student@example.com</span>
+              <span className="truncate font-semibold">
+                {loading ? 'Loading...' : (userProfile?.first_name || 'Student User')}
+              </span>
+              <span className="truncate text-xs">
+                {loading ? '...' : (userProfile?.email || 'student@example.com')}
+              </span>
             </div>
           </div>
         </SidebarFooter>

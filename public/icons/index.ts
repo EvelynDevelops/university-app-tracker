@@ -16,3 +16,6 @@ export { default as FilterIcon } from './FilterIcon';
 export { default as XIcon } from './XIcon';
 export { default as SearchIcon } from './SearchIcon';
 export { default as ChevronDownIcon } from './ChevronDownIcon';
+export { default as LockIcon } from './LockIcon';
+export { default as BellIcon } from './BellIcon';
+export { default as CopyIcon } from './CopyIcon';
