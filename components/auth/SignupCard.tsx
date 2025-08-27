@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/auth/PasswordInput";
-import { LoadingIcon } from "@/public/icons";
+import { supabaseBrowser } from "@/lib/supabase/helpers";
 
 type UserRole = "student" | "parent";
 
@@ -15,174 +14,69 @@ export default function SignupCard() {
   const [lastName,  setLastName]  = useState("");
   const [email,     setEmail]     = useState("");
   const [password,  setPassword]  = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [userRole, setUserRole] = useState<UserRole>("student");
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [confirm,   setConfirm]   = useState("");
+  const [role,      setRole]      = useState<UserRole>("student");
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState<string | null>(null);
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isPending) return;
+  const disabled = loading || !firstName || !lastName || !email || !password || password !== confirm;
 
-    // basic client-side checks
-    if (password !== confirmPassword) {
-      setFormError("Passwords do not match.");
-      return;
-    }
-    setFormError(null);
+  const handleSignup = async () => {
+    if (disabled) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const supabase = supabaseBrowser();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { first_name: firstName, last_name: lastName, role },
+          emailRedirectTo: `${window.location.origin}/auth/login`,
+        },
+      });
+      if (error) throw error;
 
-    startTransition(async () => {
-      try {
-        const res = await fetch("/api/signup", {
+      const userId = data.user?.id;
+      if (userId) {
+        await fetch("/api/profiles", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, email, password, role: userRole }),
+          body: JSON.stringify({ user_id: userId, first_name: firstName, last_name: lastName, role, email }),
         });
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data?.message || "Signup failed");
-        }
-
-        // wipe secrets from memory
-        setPassword(""); 
-        setConfirmPassword("");
-
-        router.push("/dashboard");
-      } catch (err: any) {
-        setFormError(err.message ?? "Something went wrong");
       }
-    });
+
+      alert("Account created. Please verify your email (if enabled).");
+      router.push("/auth/login");
+    } catch (e: any) {
+      setError(e?.message ?? "Signup failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const disabled =
-    isPending ||
-    !firstName ||
-    !lastName ||
-    !email ||
-    !password ||
-    !confirmPassword ||
-    password !== confirmPassword;
-
   return (
-    <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl shadow-lg backdrop-blur-sm p-4 sm:p-6">
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        {/* Name */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            name="firstName"
-            label="First Name"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            placeholder="John"
-            required
-            autoComplete="given-name"
-          />
-          <Input
-            name="lastName"
-            label="Last Name"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            placeholder="Doe"
-            required
-            autoComplete="family-name"
-          />
-        </div>
-
-        <Input
-          name="email"
-          label="Email address"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          required
-          autoComplete="email"
-          aria-invalid={!!formError && formError.toLowerCase().includes("email")}
-        />
-
-        {/* Role */}
-        <fieldset className="mt-2">
-          <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            I am registering as:
-          </legend>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {(["student","parent"] as const).map(role => (
-              <label key={role} className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
-                <input
-                  type="radio"
-                  name="userRole"
-                  value={role}
-                  checked={userRole === role}
-                  onChange={() => setUserRole(role)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                />
-                <div className="ml-3">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {role === "student" ? "Student" : "Parent"}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {role === "student" ? "Track applications" : "Monitor progress"}
-                  </div>
-                </div>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <PasswordInput
-          name="password"
-          label="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Create a password"
-          minLength={8}
-          required
-          autoComplete="new-password"
-        />
-
-        <PasswordInput
-          name="confirmPassword"
-          label="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="Confirm your password"
-          required
-          autoComplete="new-password"
-        />
-
-        {formError && (
-          <p className="text-sm text-red-600" role="alert" aria-live="polite">
-            {formError}
-          </p>
-        )}
-
-        <Button
-          type="submit"
-          disabled={disabled}
-          className="w-full aria-busy:opacity-60"
-          aria-busy={isPending}
-        >
-          {isPending ? (
-            <span className="flex items-center justify-center">
-              <LoadingIcon className="w-4 h-4 mr-2" role="status" aria-label="Loading" />
-              Creating account...
-            </span>
-          ) : (
-            "Create account"
-          )}
-        </Button>
-      </form>
-
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          Already have an account?{" "}
-          <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-            Sign in
-          </Link>
-        </p>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input label="First Name" value={firstName} onChange={(e)=>setFirstName(e.target.value)} />
+        <Input label="Last Name"  value={lastName}  onChange={(e)=>setLastName(e.target.value)} />
       </div>
+      <Input label="Email" type="email" value={email} onChange={(e)=>setEmail(e.target.value)} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {(["student","parent"] as const).map(r => (
+          <label key={r} className="flex items-center p-3 border rounded-lg cursor-pointer">
+            <input type="radio" name="role" checked={role===r} onChange={()=>setRole(r)} className="mr-2" />
+            {r === "student" ? "Student" : "Parent"}
+          </label>
+        ))}
+      </div>
+      <PasswordInput label="Password" value={password} onChange={(e)=>setPassword(e.target.value)} minLength={8}/>
+      <PasswordInput label="Confirm Password" value={confirm} onChange={(e)=>setConfirm(e.target.value)}/>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <Button type="button" onClick={handleSignup} disabled={disabled} className="w-full">
+        {loading ? "Creating account..." : "Create account"}
+      </Button>
     </div>
   );
 }

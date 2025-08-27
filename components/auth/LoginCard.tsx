@@ -1,35 +1,53 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { LoadingIcon } from '@/public/icons'
+import { supabaseBrowser } from '@/lib/supabase/helpers'
 
 export default function LoginCard() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const searchParams = useSearchParams()
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  useEffect(() => {
+    const code = searchParams.get('code')
+    const redirect = searchParams.get('redirect') || '/student/dashboard'
+    if (!code) return
+
+    ;(async () => {
+      try {
+        setLoading(true)
+        const supabase = supabaseBrowser()
+        const { error } = await supabase.auth.exchangeCodeForSession(code) // 这里传字符串
+        if (error) {
+          alert(error.message)
+          return
+        }
+        router.replace(redirect) // 登录成功后跳转
+      } finally {
+        setLoading(false)
+      }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleSubmit = async (e?: React.SyntheticEvent) => {
+    e?.preventDefault?.()
+    e?.stopPropagation?.()
     if (loading) return
-    
     setLoading(true)
     try {
-      // mock login success
-      console.log('Login attempt:', { email, password })
-      
-      // mock login success
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // redirect to dashboard after login success
-      router.push('/dashboard')
-    } catch (error) {
-      console.error('Login failed:', error)
+      const supabase = supabaseBrowser()
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) { alert(error.message); return }
+      router.push('/student/dashboard')
     } finally {
       setLoading(false)
     }
@@ -37,7 +55,7 @@ export default function LoginCard() {
 
   return (
     <div className="bg-white/80 dark:bg-gray-800/80 rounded-xl shadow-lg backdrop-blur-sm p-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleSubmit(); } }}>
         <Input
           label="Email address"
           type="email"
@@ -72,20 +90,14 @@ export default function LoginCard() {
         </div>
 
         <Button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={loading || !email || !password}
           className="w-full"
         >
-          {loading ? (
-            <div className="flex items-center justify-center">
-              <LoadingIcon className="w-4 h-4 mr-2" />
-              Signing in...
-            </div>
-          ) : (
-            'Sign in'
-          )}
+          {loading ? 'Signing in...' : 'Sign in'}
         </Button>
-      </form>
+      </div>
 
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-600 dark:text-gray-300">
