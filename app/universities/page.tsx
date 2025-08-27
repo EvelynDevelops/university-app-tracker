@@ -1,104 +1,69 @@
 "use client"
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import DashboardLayout from '@/components/layouts/DashboardLayout'
 import { UniversityCardList } from '@/components/universities'
-import UniversityFilterBar, { FilterValues } from '@/components/universities/UniversityFilterBar'
+import { FilterValues } from '@/components/universities/UniversityFilterBar'
+import UniversitiesFilterSection from '@/components/universities/UniversitiesFilterSection'
+import { filterUniversities } from '@/utils/universityFilters'
+import { supabaseBrowser } from '@/lib/supabase/helpers'
+
+type UIUniversity = {
+  id: string
+  name: string
+  ranking: number
+  location: string
+  acceptanceRate: number
+  applicationRequirements: string[]
+  logo?: string
+}
 
 export default function UniversitiesPage() {
-  // Mock data for universities
-  const universities = [
-    {
-      id: "1",
-      name: "Stanford University",
-      ranking: 3,
-      location: "Stanford, CA",
-      acceptanceRate: 4.3,
-      applicationRequirements: [
-        "SAT/ACT scores",
-        "High school transcript",
-        "Letters of recommendation",
-        "Personal statement",
-        "Extracurricular activities"
-      ],
-      logo: "/logos/stanford.png"
-    },
-    {
-      id: "2",
-      name: "MIT",
-      ranking: 1,
-      location: "Cambridge, MA",
-      acceptanceRate: 6.7,
-      applicationRequirements: [
-        "SAT/ACT scores",
-        "High school transcript",
-        "Letters of recommendation",
-        "Personal statement",
-        "Research experience"
-      ],
-      logo: "/logos/mit.png"
-    },
-    {
-      id: "3",
-      name: "Harvard University",
-      ranking: 2,
-      location: "Cambridge, MA",
-      acceptanceRate: 4.6,
-      applicationRequirements: [
-        "SAT/ACT scores",
-        "High school transcript",
-        "Letters of recommendation",
-        "Personal statement",
-        "Leadership experience"
-      ],
-      logo: "/logos/harvard.png"
-    },
-    {
-      id: "4",
-      name: "University of California, Berkeley",
-      ranking: 13,
-      location: "Berkeley, CA",
-      acceptanceRate: 14.5,
-      applicationRequirements: [
-        "SAT/ACT scores",
-        "High school transcript",
-        "Letters of recommendation",
-        "Personal statement",
-        "Community service"
-      ],
-      logo: "/logos/berkeley.png"
-    },
-    {
-      id: "5",
-      name: "Yale University",
-      ranking: 4,
-      location: "New Haven, CT",
-      acceptanceRate: 6.2,
-      applicationRequirements: [
-        "SAT/ACT scores",
-        "High school transcript",
-        "Letters of recommendation",
-        "Personal statement",
-        "Academic achievements"
-      ],
-      logo: "/logos/yale.png"
-    },
-    {
-      id: "6",
-      name: "Princeton University",
-      ranking: 5,
-      location: "Princeton, NJ",
-      acceptanceRate: 5.8,
-      applicationRequirements: [
-        "SAT/ACT scores",
-        "High school transcript",
-        "Letters of recommendation",
-        "Personal statement",
-        "Research projects"
-      ],
-      logo: "/logos/princeton.png"
-    }
-  ]
+  const [universities, setUniversities] = useState<UIUniversity[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const supabase = supabaseBrowser()
+
+        // select columns from universities table
+        const { data, error } = await supabase
+          .from('universities')
+          .select('id,name,us_news_ranking,city,state,country,acceptance_rate')
+
+        if (error) throw error
+
+        const mapped: UIUniversity[] = (data || []).map((row: any) => {
+          const ranking = Number(row.us_news_ranking ?? row.ranking ?? 0)
+          const acceptanceRate = Number(row.acceptance_rate ?? row.acceptanceRate ?? 0)
+          const loc = [row.city, row.state, row.country].filter(Boolean).join(', ')
+          const applicationRequirements = Array.isArray(row.application_requirements)
+            ? row.application_requirements
+            : []
+
+          return {
+            id: row.id,
+            name: row.name,
+            ranking,
+            location: loc,
+            acceptanceRate,
+            applicationRequirements,
+            logo: (row.logo ?? undefined) as string | undefined,
+          }
+        })
+
+        setUniversities(mapped)
+      } catch (e: any) {
+        setError(e?.message ?? 'Failed to load universities')
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [])
 
   const [currentFilters, setCurrentFilters] = useState<FilterValues>({
     search: "",
@@ -118,43 +83,8 @@ export default function UniversitiesPage() {
 
   // Filter universities based on applied filters (only when search is clicked)
   const filteredUniversities = useMemo(() => {
-    return universities.filter(university => {
-      // Search filter
-      if (appliedFilters.search && !university.name.toLowerCase().includes(appliedFilters.search.toLowerCase())) {
-        return false
-      }
-
-      // Location filter
-      if (appliedFilters.location !== "All Locations") {
-        if (appliedFilters.location === "California" && !university.location.includes("CA")) return false
-        if (appliedFilters.location === "Massachusetts" && !university.location.includes("MA")) return false
-        if (appliedFilters.location === "Connecticut" && !university.location.includes("CT")) return false
-        if (appliedFilters.location === "New Jersey" && !university.location.includes("NJ")) return false
-      }
-
-      // Ranking filter
-      if (appliedFilters.ranking !== "All Rankings") {
-        const ranking = university.ranking
-        if (appliedFilters.ranking === "Top 5" && ranking > 5) return false
-        if (appliedFilters.ranking === "Top 10" && ranking > 10) return false
-        if (appliedFilters.ranking === "Top 20" && ranking > 20) return false
-        if (appliedFilters.ranking === "Top 50" && ranking > 50) return false
-        if (appliedFilters.ranking === "Top 100" && ranking > 100) return false
-      }
-
-      // Acceptance rate filter
-      if (appliedFilters.acceptanceRate !== "All Acceptance Rates") {
-        const rate = university.acceptanceRate
-        if (appliedFilters.acceptanceRate === "Under 5%" && rate >= 5) return false
-        if (appliedFilters.acceptanceRate === "5% - 10%" && (rate < 5 || rate > 10)) return false
-        if (appliedFilters.acceptanceRate === "10% - 20%" && (rate < 10 || rate > 20)) return false
-        if (appliedFilters.acceptanceRate === "20% - 50%" && (rate < 20 || rate > 50)) return false
-        if (appliedFilters.acceptanceRate === "Over 50%" && rate <= 50) return false
-      }
-
-      return true
-    })
-  }, [appliedFilters])
+    return filterUniversities(universities, appliedFilters)
+  }, [appliedFilters, universities])
 
   const handleViewDetails = (id: string) => {
     console.log('View details for university:', id)
@@ -165,14 +95,11 @@ export default function UniversitiesPage() {
   }
 
   const handleFiltersChange = (newFilters: FilterValues) => {
-    // 只更新当前筛选条件，不触发搜索
     setCurrentFilters(newFilters)
   }
 
   const handleSearch = (filters: FilterValues) => {
-    // 点击搜索按钮时才应用筛选条件
     setAppliedFilters(filters)
-    console.log('Search triggered with filters:', filters)
   }
 
   return (
@@ -189,12 +116,11 @@ export default function UniversitiesPage() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6">
-          <UniversityFilterBar 
-            onFiltersChange={handleFiltersChange}
-            onSearch={handleSearch}
-          />
-        </div>
+        <UniversitiesFilterSection
+          className="mb-6"
+          onFiltersChange={handleFiltersChange}
+          onSearch={handleSearch}
+        />
 
         {/* Results Summary */}
         <div className="mb-8">
@@ -204,7 +130,8 @@ export default function UniversitiesPage() {
                 Top Universities
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Showing {filteredUniversities.length} of {universities.length} universities
+                {loading ? 'Loading...' : `Showing ${filteredUniversities.length} of ${universities.length} universities`}
+                {error ? ` · Error: ${error}` : ''}
               </p>
             </div>
           </div>
@@ -212,7 +139,7 @@ export default function UniversitiesPage() {
 
         {/* University Cards */}
         <UniversityCardList
-          universities={filteredUniversities}
+          universities={filteredUniversities as UIUniversity[]}
           onViewDetails={handleViewDetails}
           onApply={handleApply}
         />
