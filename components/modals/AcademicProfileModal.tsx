@@ -156,7 +156,7 @@ export default function AcademicProfileModal({ open, onClose, onSaved }: Props) 
           </div>
         </div>
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-3">
-          <Button variant="outline" onClick={onClose} className="min-w-[96px]">Skip</Button>
+          <Button variant="outline" onClick={onClose} className="min-w-[96px]">Cancel</Button>
           <Button onClick={save} disabled={loading} className="min-w-[96px]">{loading ? 'Saving...' : 'Save'}</Button>
         </div>
       </div>
