@@ -15,7 +15,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/shared/sidebar"
+} from "@/components/ui/sidebar"
 import { usePathname } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
 

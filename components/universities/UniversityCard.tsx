@@ -1,7 +1,7 @@
 import React from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
-import { MapPinIcon, StarIcon, UsersIcon, FileTextIcon } from '@/public/icons'
+import { MapPinIcon, UsersIcon, FileTextIcon } from '@/public/icons'
 
 interface UniversityCardProps {
   university: {
@@ -42,7 +42,7 @@ export default function UniversityCard({
                   className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                 />
               ) : (
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 bg-gradient-to-br from-black to-gray-900 rounded-lg flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-bold text-lg">
                     {university.name.charAt(0)}
                   </span>
@@ -59,10 +59,9 @@ export default function UniversityCard({
               </div>
             </div>
           </div>
-          
           {/* Ranking Badge */}
-          <div className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded-full text-sm font-medium flex-shrink-0">
-            <StarIcon className="w-4 h-4" />
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 border border-gray-300 dark:border-gray-700">
+            <span>Rank</span>
             <span>#{university.ranking}</span>
           </div>
         </div>
@@ -118,7 +117,7 @@ export default function UniversityCard({
             className="flex-1"
             onClick={() => onApply?.(university.id)}
           >
-            Apply Now
+            Add to List
           </Button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { MapPinIcon, GraduationCapIcon, StarIcon, UsersIcon, SearchIcon, ChevronDownIcon } from '@/public/icons'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/FilterBar'
 
 interface UniversityFilterBarProps {
   onFiltersChange: (filters: FilterValues) => void
@@ -38,15 +39,12 @@ const majors = [
 
 const locations = [
   "All Locations",
-  "California",
-  "Massachusetts", 
-  "Connecticut",
-  "New Jersey",
-  "New York",
-  "Pennsylvania",
-  "Illinois",
-  "Michigan",
-  "Texas"
+  "USA",
+  "Canada",
+  "UK",
+  "Australia",
+  "New Zealand",
+  "Other"
 ]
 
 const rankingRanges = [
@@ -79,12 +77,10 @@ export default function UniversityFilterBar({ onFiltersChange, onSearch, classNa
   const handleFilterChange = (key: keyof FilterValues, value: string) => {
     const newFilters = { ...filters, [key]: value }
     setFilters(newFilters)
-    // 只更新筛选条件，不触发搜索
     onFiltersChange(newFilters)
   }
 
   const handleSearch = () => {
-    // 点击搜索按钮时才触发搜索
     onSearch(filters)
   }
 
@@ -94,66 +90,75 @@ export default function UniversityFilterBar({ onFiltersChange, onSearch, classNa
     }
   }
 
+  const popoverItemClass = "w-full text-left px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+  const triggerBase = "flex items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-gray-800 rounded-lg text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent"
+  const triggerPill = "appearance-none px-4 py-2 bg-transparent border border-black dark:border-white/80 rounded-full text-black dark:text-white text-sm"
+
   return (
-    <div className={cn("bg-gradient-to-r from-blue-900 to-blue-800 rounded-lg shadow-lg p-6", className)}>
+    <div className={cn("bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow p-6", className)}>
       {/* Top Section - What and Where */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* What Section */}
         <div>
-          <label className="block text-white font-bold text-sm mb-2">
+          <label className="block text-gray-900 dark:text-white font-bold text-sm mb-2">
             What
           </label>
           <div className="flex gap-2">
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Enter keywords"
+                placeholder="Enter University Name"
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="w-full px-4 py-3 bg-white rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent"
               />
             </div>
-            <div className="relative">
-              <select
-                value={filters.major}
-                onChange={(e) => handleFilterChange('major', e.target.value)}
-                className="appearance-none px-4 py-3 bg-white rounded-lg text-gray-900 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              >
-                {majors.map((major) => (
-                  <option key={major} value={major}>
-                    {major}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-            </div>
+            {/* Major Popover */}
+            <Popover>
+              <PopoverTrigger className={cn(triggerBase, "pr-10 relative whitespace-nowrap w-48 h-[48px] truncate")}> 
+                <span className="truncate">{filters.major}</span>
+                <ChevronDownIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 absolute right-3" />
+              </PopoverTrigger>
+              <PopoverContent className="w-60 p-2">
+                <div className="flex flex-col gap-1">
+                  {majors.map((m) => (
+                    <button key={m} onClick={() => handleFilterChange('major', m)} className={popoverItemClass}>
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
         {/* Where Section */}
         <div>
-          <label className="block text-white font-bold text-sm mb-2">
+          <label className="block text-gray-900 dark:text-white font-bold text-sm mb-2">
             Where
           </label>
           <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <select
-                value={filters.location}
-                onChange={(e) => handleFilterChange('location', e.target.value)}
-                className="w-full px-4 py-3 bg-white rounded-lg text-gray-900 appearance-none pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              >
-                {locations.map((location) => (
-                  <option key={location} value={location}>
-                    {location}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            <div className="flex-1">
+              <Popover>
+                <PopoverTrigger className={cn(triggerBase, "pr-10 w-full relative text-left h-[48px] truncate")}> 
+                  <span className="truncate">{filters.location}</span>
+                  <ChevronDownIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 absolute right-3" />
+                </PopoverTrigger>
+                <PopoverContent className="w-60 p-2">
+                  <div className="flex flex-col gap-1">
+                    {locations.map((loc) => (
+                      <button key={loc} onClick={() => handleFilterChange('location', loc)} className={popoverItemClass}>
+                        {loc}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <Button
               onClick={handleSearch}
-              className="px-8 py-3 bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-lg transition-colors duration-200"
+              className="w-40 h-[48px] bg-black hover:bg-gray-800 text-white font-semibold rounded-lg transition-colors duration-200"
             >
               SEARCH
             </Button>
@@ -164,36 +169,38 @@ export default function UniversityFilterBar({ onFiltersChange, onSearch, classNa
       {/* Bottom Section - Filter Buttons */}
       <div className="flex flex-wrap gap-3">
         {/* Ranking Filter */}
-        <div className="relative">
-          <select
-            value={filters.ranking}
-            onChange={(e) => handleFilterChange('ranking', e.target.value)}
-            className="appearance-none px-4 py-2 bg-transparent border border-white rounded-full text-white text-sm pr-8 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-          >
-            {rankingRanges.map((ranking) => (
-              <option key={ranking} value={ranking} className="bg-blue-800 text-white">
-                {ranking}
-              </option>
-            ))}
-          </select>
-          <ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-white pointer-events-none" />
-        </div>
+        <Popover>
+          <PopoverTrigger className={cn(triggerPill, "pr-8 relative w-40 h-9 truncate")}> 
+            <span className="truncate">{filters.ranking}</span>
+            <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-black dark:text-white" />
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-2">
+            <div className="flex flex-col gap-1">
+              {rankingRanges.map((r) => (
+                <button key={r} onClick={() => handleFilterChange('ranking', r)} className={popoverItemClass}>
+                  {r}
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {/* Acceptance Rate Filter */}
-        <div className="relative">
-          <select
-            value={filters.acceptanceRate}
-            onChange={(e) => handleFilterChange('acceptanceRate', e.target.value)}
-            className="appearance-none px-4 py-2 bg-transparent border border-white rounded-full text-white text-sm pr-8 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent"
-          >
-            {acceptanceRateRanges.map((rate) => (
-              <option key={rate} value={rate} className="bg-blue-800 text-white">
-                {rate}
-              </option>
-            ))}
-          </select>
-          <ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-white pointer-events-none" />
-        </div>
+        <Popover>
+          <PopoverTrigger className={cn(triggerPill, "pr-8 relative w-40 h-9 truncate")}> 
+            <span className="truncate">{filters.acceptanceRate}</span>
+            <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-black dark:text-white" />
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-2">
+            <div className="flex flex-col gap-1">
+              {acceptanceRateRanges.map((rate) => (
+                <button key={rate} onClick={() => handleFilterChange('acceptanceRate', rate)} className={popoverItemClass}>
+                  {rate}
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   )
