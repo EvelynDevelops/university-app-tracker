@@ -40,7 +40,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         const { data: { user } } = await supabase.auth.getUser()
         
         if (user) {
-          // Get user profile from profiles table
           const { data: profile } = await supabase
             .from('profiles')
             .select('first_name, email')
@@ -87,7 +86,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={isActive('/student/applications')}>
                     <a href="/student/applications">
-                      <span>Applications</span>
+                      <span>My Applications</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -102,6 +101,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <SidebarMenuButton asChild isActive={isActive('/student/profile')}>
                     <a href="/student/profile">
                       <span>Academic Profile</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive('/student/messages')}>
+                    <a href="/student/messages">
+                      <span>Parent Messages</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
