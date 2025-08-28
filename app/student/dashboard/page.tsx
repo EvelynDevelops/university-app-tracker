@@ -5,7 +5,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout'
 import Pipeline, { PipelineStage, PipelineCard } from '@/components/dashboard/Pipeline'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
 import AcademicProfileModal from '@/components/modals/AcademicProfileModal'
-import { getApplications, Application } from '@/lib/services/applicationService'
+import { getApplications, Application, updateApplication } from '@/lib/services/applicationService'
 
 export default function StudentDashboard() {
   const [firstName, setFirstName] = useState<string>('')
@@ -90,6 +90,41 @@ export default function StudentDashboard() {
   const accepted = applications.filter(a => a.status === 'ACCEPTED').length
   const dueIn7 = applications.filter(a => a.deadline && (new Date(a.deadline as any).getTime() - new Date().setHours(0,0,0,0)) / (1000*60*60*24) <= 7 && (new Date(a.deadline as any).getTime() - new Date().setHours(0,0,0,0)) / (1000*60*60*24) >= 0).length
 
+  // Handle pipeline drag-and-drop updates
+  const stageToStatus = (stageId: string): Application['status'] => {
+    if (stageId === 'not_started') return 'NOT_STARTED'
+    if (stageId === 'in_progress') return 'IN_PROGRESS'
+    if (stageId === 'submitted') return 'SUBMITTED'
+    if (stageId === 'under_review') return 'UNDER_REVIEW'
+    return 'ACCEPTED' // default into decision column; can be refined via detail page
+  }
+
+  const handlePipelineChange = async (nextCards: PipelineCard[]) => {
+    // Build current status map
+    const idToStatus: Record<string, Application['status']> = {}
+    for (const a of applications) idToStatus[a.id] = a.status
+
+    // For each card, if stage changed -> update backend and local state
+    const updates: Array<Promise<any>> = []
+    const localUpdates: Array<{ id: string; status: Application['status'] }> = []
+    for (const card of nextCards) {
+      const nextStatus = stageToStatus(card.stageId)
+      if (idToStatus[card.id] !== nextStatus) {
+        localUpdates.push({ id: card.id, status: nextStatus })
+        updates.push(updateApplication(card.id, { status: nextStatus }))
+      }
+    }
+    // Optimistic local update
+    if (localUpdates.length) {
+      setApplications(prev => prev.map(a => {
+        const u = localUpdates.find(x => x.id === a.id)
+        return u ? { ...a, status: u.status } : a
+      }))
+    }
+    // Fire-and-forget; errors can be handled/logged if needed
+    await Promise.allSettled(updates)
+  }
+
   return (
     <DashboardLayout>
       <div className="p-6">
@@ -140,7 +175,7 @@ export default function StudentDashboard() {
               </div>
             </div>
           ) : (
-            <Pipeline stages={stages} cards={cards} />
+            <Pipeline stages={stages} cards={cards} onChange={handlePipelineChange} />
           )}
         </div>
       </div>
