@@ -11,7 +11,6 @@ interface UniversityCardProps {
     location: string
     acceptanceRate: number
     applicationRequirements: string[]
-    logo?: string
     website?: string
   }
   className?: string
@@ -34,28 +33,13 @@ export default function UniversityCard({
       <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-2">
-              {university.logo ? (
-                <img 
-                  src={university.logo} 
-                  alt={`${university.name} logo`}
-                  className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                />
-              ) : (
-                <div className="w-12 h-12 bg-gradient-to-br from-black to-gray-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-bold text-lg">
-                    {university.name.charAt(0)}
-                  </span>
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                  {university.name}
-                </h3>
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <MapPinIcon className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">{university.location}</span>
-                </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate mb-2">
+                {university.name}
+              </h3>
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <MapPinIcon className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{university.location}</span>
               </div>
             </div>
           </div>

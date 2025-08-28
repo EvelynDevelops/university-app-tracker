@@ -1,68 +1,40 @@
 "use client"
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/layouts/DashboardLayout'
 import { UniversityCardList } from '@/components/universities'
 import { FilterValues } from '@/components/universities/UniversityFilterBar'
 import UniversitiesFilterSection from '@/components/universities/UniversitiesFilterSection'
-import { filterUniversities } from '@/utils/universityFilters'
-import { supabaseBrowser } from '@/lib/supabase/helpers'
-
-type UIUniversity = {
-  id: string
-  name: string
-  ranking: number
-  location: string
-  acceptanceRate: number
-  applicationRequirements: string[]
-  logo?: string
-}
+import { fetchUniversities, UIUniversity } from '@/lib/services/universityService'
 
 export default function UniversitiesPage() {
   const [universities, setUniversities] = useState<UIUniversity[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const supabase = supabaseBrowser()
-
-        // select columns from universities table
-        const { data, error } = await supabase
-          .from('universities')
-          .select('id,name,us_news_ranking,city,state,country,acceptance_rate')
-
-        if (error) throw error
-
-        const mapped: UIUniversity[] = (data || []).map((row: any) => {
-          const ranking = Number(row.us_news_ranking ?? row.ranking ?? 0)
-          const acceptanceRate = Number(row.acceptance_rate ?? row.acceptanceRate ?? 0)
-          const loc = [row.city, row.state, row.country].filter(Boolean).join(', ')
-          const applicationRequirements = Array.isArray(row.application_requirements)
-            ? row.application_requirements
-            : []
-
-          return {
-            id: row.id,
-            name: row.name,
-            ranking,
-            location: loc,
-            acceptanceRate,
-            applicationRequirements,
-            logo: (row.logo ?? undefined) as string | undefined,
-          }
-        })
-
-        setUniversities(mapped)
-      } catch (e: any) {
-        setError(e?.message ?? 'Failed to load universities')
-      } finally {
-        setLoading(false)
+  // Function to load universities using service
+  const loadUniversities = async (filters?: FilterValues) => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const result = await fetchUniversities(filters)
+      
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setUniversities(result.universities)
       }
-    })()
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load universities')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Initial load
+  useEffect(() => {
+    loadUniversities()
   }, [])
 
   const [currentFilters, setCurrentFilters] = useState<FilterValues>({
@@ -81,10 +53,8 @@ export default function UniversitiesPage() {
     acceptanceRate: "All Acceptance Rates"
   })
 
-  // Filter universities based on applied filters (only when search is clicked)
-  const filteredUniversities = useMemo(() => {
-    return filterUniversities(universities, appliedFilters)
-  }, [appliedFilters, universities])
+  // Universities are now filtered by the API, so we use the universities state directly
+  const filteredUniversities = universities
 
   const handleViewDetails = (id: string) => {
     console.log('View details for university:', id)
@@ -100,6 +70,7 @@ export default function UniversitiesPage() {
 
   const handleSearch = (filters: FilterValues) => {
     setAppliedFilters(filters)
+    loadUniversities(filters)
   }
 
   return (
