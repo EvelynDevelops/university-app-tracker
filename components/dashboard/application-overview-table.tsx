@@ -73,7 +73,7 @@ function ContributorsOverviewTable() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
+      <div className="w-full max-w-6xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold text-foreground">Applications Overview</h2>
         <div className="flex items-center justify-center py-8">
           <div className="text-muted-foreground">Loading applications...</div>
@@ -84,7 +84,7 @@ function ContributorsOverviewTable() {
 
   if (error) {
     return (
-      <div className="max-w-3xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
+      <div className="w-full max-w-6xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold text-foreground">Applications Overview</h2>
         <div className="flex items-center justify-center py-8">
           <div className="text-red-600">{error}</div>
@@ -95,7 +95,7 @@ function ContributorsOverviewTable() {
 
   if (applications.length === 0) {
     return (
-      <div className="max-w-3xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
+      <div className="w-full max-w-6xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold text-foreground">Applications Overview</h2>
         <div className="flex items-center justify-center py-8">
           <div className="text-center">
@@ -110,44 +110,48 @@ function ContributorsOverviewTable() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
+    <div className="w-full max-w-none mx-auto rounded-xl border border-border bg-background p-4 sm:p-6 shadow-sm">
       <h2 className="mb-4 text-xl font-semibold text-foreground">Applications Overview</h2>
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[160px]">University</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead className="w-[130px]">Deadline</TableHead>
-            <TableHead className="w-[140px]">Status</TableHead>
-            <TableHead className="text-right w-[120px]">Type</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {applications.map((app) => (
-            <TableRow 
-              key={app.id} 
-              className="hover:bg-muted/40 transition-colors cursor-pointer"
-              onClick={() => handleRowClick(app.id)}
-            >
-              <TableCell className="font-medium">
-                {app.university?.name || 'Unknown University'}
-              </TableCell>
-              <TableCell>{app.university?.location || 'N/A'}</TableCell>
-              <TableCell>{formatDate(app.deadline)}</TableCell>
-              <TableCell>
-                <span
-                  className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(app.status)}`}
+      <div className="-mx-4 sm:mx-0 overflow-x-auto">
+        <div className="inline-block min-w-full align-middle">
+          <Table className="table-auto w-full">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[220px]">University</TableHead>
+                <TableHead className="min-w-[240px]">Location</TableHead>
+                <TableHead className="min-w-[180px]">Deadline</TableHead>
+                <TableHead className="min-w-[200px]">Status</TableHead>
+                <TableHead className="text-right min-w-[200px]">Type</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {applications.map((app) => (
+                <TableRow 
+                  key={app.id} 
+                  className="hover:bg-muted/40 transition-colors cursor-pointer"
+                  onClick={() => handleRowClick(app.id)}
                 >
-                  {formatStatus(app.status)}
-                </span>
-              </TableCell>
-              <TableCell className="text-right">
-                {app.application_type ? formatStatus(app.application_type) : 'Not set'}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                  <TableCell className="font-medium">
+                    {app.university?.name || 'Unknown University'}
+                  </TableCell>
+                  <TableCell>{app.university?.location || 'N/A'}</TableCell>
+                  <TableCell>{formatDate(app.deadline)}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(app.status)}`}
+                    >
+                      {formatStatus(app.status)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {app.application_type ? formatStatus(app.application_type) : 'Not set'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 }
