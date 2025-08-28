@@ -14,7 +14,7 @@ export default function ParentAcademicProfile({ students }: ParentAcademicProfil
         Academic Profile
       </h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-4">
         {students.map((student) => (
           <div
             key={student.user_id}
@@ -35,73 +35,97 @@ export default function ParentAcademicProfile({ students }: ParentAcademicProfil
             </div>
 
             <div className="space-y-3">
-              {student.graduation_year && (
+              {student.graduation_year ? (
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Graduation Year:</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {student.graduation_year}
                   </span>
                 </div>
+              ) : (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Graduation Year:</span>
+                  <span className="text-sm text-gray-400 dark:text-gray-500">Not set</span>
+                </div>
               )}
 
-              {student.gpa && (
+              {student.gpa ? (
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">GPA:</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {student.gpa}
                   </span>
                 </div>
+              ) : (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">GPA:</span>
+                  <span className="text-sm text-gray-400 dark:text-gray-500">Not set</span>
+                </div>
               )}
 
-              {student.sat_score && (
+              {student.sat_score ? (
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">SAT Score:</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {student.sat_score}
                   </span>
                 </div>
+              ) : (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">SAT Score:</span>
+                  <span className="text-sm text-gray-400 dark:text-gray-500">Not set</span>
+                </div>
               )}
 
-              {student.act_score && (
+              {student.act_score ? (
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">ACT Score:</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {student.act_score}
                   </span>
                 </div>
+              ) : (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">ACT Score:</span>
+                  <span className="text-sm text-gray-400 dark:text-gray-500">Not set</span>
+                </div>
               )}
 
-              {student.target_countries && student.target_countries.length > 0 && (
-                <div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Target Countries:</span>
-                  <div className="mt-1">
-                    {student.target_countries.map((country, index) => (
+              <div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Target Countries:</span>
+                <div className="mt-1">
+                  {student.target_countries && student.target_countries.length > 0 ? (
+                    student.target_countries.map((country, index) => (
                       <span
                         key={index}
                         className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded mr-1 mb-1"
                       >
                         {country}
                       </span>
-                    ))}
-                  </div>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-400 dark:text-gray-500">Not set</span>
+                  )}
                 </div>
-              )}
+              </div>
 
-              {student.intended_majors && student.intended_majors.length > 0 && (
-                <div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Intended Majors:</span>
-                  <div className="mt-1">
-                    {student.intended_majors.map((major, index) => (
+              <div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Intended Majors:</span>
+                <div className="mt-1">
+                  {student.intended_majors && student.intended_majors.length > 0 ? (
+                    student.intended_majors.map((major, index) => (
                       <span
                         key={index}
                         className="inline-block bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs px-2 py-1 rounded mr-1 mb-1"
                       >
                         {major}
                       </span>
-                    ))}
-                  </div>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-400 dark:text-gray-500">Not set</span>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         ))}

@@ -110,11 +110,18 @@ export default function ParentDashboard() {
             {/* Overview Stats */}
             <ParentOverview />
             
-            {/* Academic Profile */}
-            <ParentAcademicProfile students={students} />
-            
-            {/* Applications Table */}
-            <ParentApplicationTable students={students} />
+            {/* Main Content Area - Left/Right Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Side - Applications Table */}
+              <div className="lg:col-span-2">
+                <ParentApplicationTable students={students} />
+              </div>
+              
+              {/* Right Side - Academic Profile */}
+              <div className="lg:col-span-1">
+                <ParentAcademicProfile students={students} />
+              </div>
+            </div>
           </div>
         )}
       </div>

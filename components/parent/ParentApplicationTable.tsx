@@ -166,22 +166,22 @@ export default function ParentApplicationTable({ students }: ParentApplicationTa
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white w-24">
                   Student
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white w-48">
                   University
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white w-32">
                   Location
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white w-24">
                   Deadline
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white w-28">
                   Status
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white w-32">
                   Type
                 </th>
               </tr>

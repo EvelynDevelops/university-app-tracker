@@ -130,13 +130,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </a>
         </SidebarMenuButton>
       </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={isActive('/parent/universities')}>
-          <a href="/parent/universities">
-            <span>Universities</span>
-          </a>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+                 <SidebarMenuItem>
+             <SidebarMenuButton asChild isActive={isActive('/parent/universities')}>
+               <a href="/parent/universities">
+                 <span>Universities</span>
+               </a>
+             </SidebarMenuButton>
+           </SidebarMenuItem>
     </>
   )
 
