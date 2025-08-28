@@ -32,3 +32,20 @@ export async function fetchRequirements(universityId: string, applicationId?: st
     return { requirements: [], error: e?.message ?? 'Failed to load requirements' }
   }
 }
+
+export async function updateRequirementProgress(applicationId: string, requirementId: string, status: 'not_started' | 'in_progress' | 'completed'): Promise<{ error?: string }>{
+  try {
+    const res = await fetch(`/api/v1/applications/${applicationId}/requirements`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requirement_id: requirementId, status })
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      return { error: err.error || `HTTP ${res.status}` }
+    }
+    return {}
+  } catch (e: any) {
+    return { error: e?.message ?? 'Failed to update requirement progress' }
+  }
+}
