@@ -63,6 +63,7 @@ export default function StudentDashboard() {
     { id: 'not_started', name: 'Not Started' },
     { id: 'in_progress', name: 'In Progress' },
     { id: 'submitted', name: 'Submitted' },
+    { id: 'under_review', name: 'Under Review' },
     { id: 'decision', name: 'Decision' },
   ]
 
@@ -70,11 +71,24 @@ export default function StudentDashboard() {
   const cards: PipelineCard[] = applications.map(app => ({
     id: app.id,
     title: app.university?.name || 'Unknown University',
-    subtitle: app.application_type ? app.application_type.replace('_', ' ') : 'Not set',
-    stageId: app.status.toLowerCase().replace('_', ' ') === 'not started' ? 'not_started' : 
-             app.status.toLowerCase().replace('_', ' ') === 'in progress' ? 'in_progress' :
-             app.status.toLowerCase().replace('_', ' ') === 'submitted' ? 'submitted' : 'decision'
+    subtitle: app.deadline ? new Date(app.deadline).toLocaleDateString() : (app.application_type ? app.application_type.replace('_',' ') : 'Type N/A'),
+    stageId: (() => {
+      const s = app.status
+      if (s === 'NOT_STARTED') return 'not_started'
+      if (s === 'IN_PROGRESS') return 'in_progress'
+      if (s === 'SUBMITTED') return 'submitted'
+      if (s === 'UNDER_REVIEW') return 'under_review'
+      return 'decision'
+    })()
   }))
+
+  // KPI metrics
+  const total = applications.length
+  const submitted = applications.filter(a => a.status === 'SUBMITTED').length
+  const inProgress = applications.filter(a => a.status === 'IN_PROGRESS').length
+  const underReview = applications.filter(a => a.status === 'UNDER_REVIEW').length
+  const accepted = applications.filter(a => a.status === 'ACCEPTED').length
+  const dueIn7 = applications.filter(a => a.deadline && (new Date(a.deadline as any).getTime() - new Date().setHours(0,0,0,0)) / (1000*60*60*24) <= 7 && (new Date(a.deadline as any).getTime() - new Date().setHours(0,0,0,0)) / (1000*60*60*24) >= 0).length
 
   return (
     <DashboardLayout>
@@ -82,9 +96,35 @@ export default function StudentDashboard() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
           {`Hello, ${firstName || 'Student'}`}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Welcome to your student dashboard. Here you can track your applications and manage your university journey.
-        </p>
+        <p className="text-gray-600 dark:text-gray-400">Your application progress and key stats at a glance.</p>
+
+        {/* KPI Cards */}
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
+            <div className="text-xs text-gray-500">Total</div>
+            <div className="text-2xl font-bold">{total}</div>
+          </div>
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
+            <div className="text-xs text-gray-500">In Progress</div>
+            <div className="text-2xl font-bold text-yellow-600">{inProgress}</div>
+          </div>
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
+            <div className="text-xs text-gray-500">Submitted</div>
+            <div className="text-2xl font-bold text-blue-600">{submitted}</div>
+          </div>
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
+            <div className="text-xs text-gray-500">Under Review</div>
+            <div className="text-2xl font-bold text-purple-600">{underReview}</div>
+          </div>
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
+            <div className="text-xs text-gray-500">Accepted</div>
+            <div className="text-2xl font-bold text-green-600">{accepted}</div>
+          </div>
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
+            <div className="text-xs text-gray-500">Due in 7 days</div>
+            <div className="text-2xl font-bold text-amber-600">{dueIn7}</div>
+          </div>
+        </div>
         
         {/* Pipeline */}
         <div className="mt-10">

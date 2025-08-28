@@ -30,6 +30,7 @@ function getDeadlineFromType(deadlines: any, type: string) {
 
 export default function ApplicationDetailsForm({ applicationId, deadlines, value, onUpdated }: Props) {
   const [saving, setSaving] = useState(false)
+  const [notesDraft, setNotesDraft] = useState<string>(value.notes || '')
 
   const persist = async (next: Partial<Props['value']>) => {
     setSaving(true)
@@ -68,8 +69,10 @@ export default function ApplicationDetailsForm({ applicationId, deadlines, value
           type="date"
           className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           value={value.deadline}
-          onChange={async (e) => { await persist({ deadline: e.target.value }) }}
+          readOnly
+          disabled
         />
+        <p className="mt-1 text-xs text-gray-500">Deadline is auto-set by Application Type.</p>
       </div>
       <div>
         <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Notes</label>
@@ -77,9 +80,17 @@ export default function ApplicationDetailsForm({ applicationId, deadlines, value
           className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           rows={4}
           placeholder="Add any notes here..."
-          value={value.notes}
-          onChange={async (e) => { await persist({ notes: e.target.value }) }}
+          value={notesDraft}
+          onChange={(e) => setNotesDraft(e.target.value)}
         />
+        <div className="flex justify-end mt-2">
+          <button
+            className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+            onClick={async () => { await persist({ notes: notesDraft }) }}
+          >
+            {saving ? 'Saving...' : 'Save Notes'}
+          </button>
+        </div>
       </div>
       {saving && <div className="text-xs text-gray-500">Saving...</div>}
     </div>

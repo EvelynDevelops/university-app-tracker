@@ -1,7 +1,7 @@
 "use client"
 
 import DashboardLayout from '@/components/layouts/DashboardLayout'
-import ContributorsOverviewTable from '@/components/dashboard/application-overview-table'
+import ContributorsOverviewTable from '@/components/applications/application-overview-table'
 import DeadlinesTracker from '@/components/applications/DeadlinesTracker'
 
 export default function StudentApplicationsPage() {
