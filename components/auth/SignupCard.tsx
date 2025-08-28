@@ -61,7 +61,13 @@ export default function SignupCard() {
 
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) throw signInError
-      router.push("/student/dashboard")
+      
+      // Redirect based on role
+      if (role === 'parent') {
+        router.push("/parent/dashboard")
+      } else {
+        router.push("/student/dashboard")
+      }
     } catch (err: any) {
       setError(err?.message ?? "Signup failed")
     } finally {

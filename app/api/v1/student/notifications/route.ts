@@ -35,13 +35,15 @@ export async function GET(_req: NextRequest) {
       const msDiff = d.getTime() - today.getTime()
       const days = Math.ceil(msDiff / (1000*60*60*24))
       if (days < 0) continue // skip overdue for this rule
+      const uniField: any = (a as any).universities
+      const uniName = Array.isArray(uniField) ? uniField[0]?.name : uniField?.name
 
       // Daily reminders within 7 days (including today)
       if (days <= 7) {
         deadlineNotifs.push({
           id: `dl-daily-${a.id}-${days}`,
           type: 'deadline',
-          title: a.universities?.name || 'University',
+          title: uniName || 'University',
           message: days === 0 ? 'Deadline today' : `Deadline in ${days} day${days>1?'s':''}`,
           date: a.deadline,
           application_id: a.id
@@ -54,7 +56,7 @@ export async function GET(_req: NextRequest) {
         deadlineNotifs.push({
           id: `dl-milestone-${a.id}-${days}`,
           type: 'deadline',
-          title: a.universities?.name || 'University',
+          title: uniName || 'University',
           message: `Deadline in ${days} days`,
           date: a.deadline,
           application_id: a.id

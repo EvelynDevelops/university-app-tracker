@@ -20,6 +20,7 @@ import {
 import { usePathname } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
 import NotificationsBell from '@/components/layouts/NotificationsBell'
+import ParentNotificationsBell from '@/components/layouts/ParentNotificationsBell'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -31,6 +32,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [userProfile, setUserProfile] = useState<{
     first_name: string | null
     email: string | null
+    role: string | null
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -46,7 +48,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         if (user) {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('first_name, email')
+            .select('first_name, email, role')
             .eq('user_id', user.id)
             .single()
           
@@ -61,6 +63,88 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     fetchUserProfile()
   }, [])
+
+  const isParent = userProfile?.role === 'parent'
+  const isStudent = userProfile?.role === 'student'
+
+  const renderStudentMenu = () => (
+    <>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isActive('/student/dashboard')}>
+          <a href="/student/dashboard">
+            <span>Student Dashboard</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isActive('/student/applications')}>
+          <a href="/student/applications">
+            <span>My Applications</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isActive('/universities')}>
+          <a href="/universities">
+            <span>Universities</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isActive('/student/profile')}>
+          <a href="/student/profile">
+            <span>Academic Profile</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isActive('/student/notifications')}>
+          <a href="/student/notifications">
+            <span>Notifications</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </>
+  )
+
+  const renderParentMenu = () => (
+    <>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isActive('/parent/dashboard')}>
+          <a href="/parent/dashboard">
+            <span>Parent Dashboard</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/parent/students')}>
+          <a href="/parent/dashboard">
+            <span>My Students</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isActive('/parent/onboarding')}>
+          <a href="/parent/onboarding">
+            <span>Link Students</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isActive('/parent/manage-students')}>
+          <a href="/parent/manage-students">
+            <span>Manage Students</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </>
+  )
+
+  const getPortalTitle = () => {
+    if (isParent) return 'Parent Portal'
+    if (isStudent) return 'Student Portal'
+    return 'Portal'
+  }
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -77,44 +161,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive('/student/dashboard')}>
-                    <a href="/student/dashboard">
-                      <span>Student Dashboard</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive('/student/applications')}>
-                    <a href="/student/applications">
-                      <span>My Applications</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive('/universities')}>
-                    <a href="/universities">
-                      <span>Universities</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive('/student/profile')}>
-                    <a href="/student/profile">
-                      <span>Academic Profile</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive('/student/messages')}>
-                    <a href="/student/messages">
-                      <span>Notifications</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {isStudent && renderStudentMenu()}
+                {isParent && renderParentMenu()}
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={isActive('/settings')}>
                     <a href="/settings">
@@ -133,14 +183,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               onClick={() => setMenuOpen(v => !v)}
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                {userProfile?.first_name ? userProfile.first_name.charAt(0).toUpperCase() : 'S'}
+                {userProfile?.first_name ? userProfile.first_name.charAt(0).toUpperCase() : 'U'}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {loading ? 'Loading...' : (userProfile?.first_name || 'Student User')}
+                  {loading ? 'Loading...' : (userProfile?.first_name || 'User')}
                 </span>
                 <span className="truncate text-xs">
-                  {loading ? '...' : (userProfile?.email || 'student@example.com')}
+                  {loading ? '...' : (userProfile?.email || 'user@example.com')}
                 </span>
               </div>
               <div className="ml-auto text-xs text-gray-500">▾</div>
@@ -177,9 +227,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex items-center gap-2">
             <SidebarTrigger />
             <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Student Portal</h1>
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{getPortalTitle()}</h1>
           </div>
-          <NotificationsBell />
+          {isStudent && <NotificationsBell />}
+          {isParent && <ParentNotificationsBell />}
         </header>
 
         {/* Main content */}
