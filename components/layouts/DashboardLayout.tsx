@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar"
 import { usePathname } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
+import NotificationsBell from '@/components/layouts/NotificationsBell'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -171,13 +172,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        {/* Simple header with just the sidebar trigger */}
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="flex items-center gap-2 px-4">
+        {/* Header with notifications bell */}
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4">
+          <div className="flex items-center gap-2">
             <SidebarTrigger />
             <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Student Portal</h1>
           </div>
+          <NotificationsBell />
         </header>
 
         {/* Main content */}
