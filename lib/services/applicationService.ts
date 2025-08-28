@@ -142,3 +142,24 @@ export async function isUniversityInApplicationList(universityId: string): Promi
     }
   }
 } 
+
+export async function updateApplication(applicationId: string, payload: any): Promise<{
+  application?: Application
+  error?: string
+}> {
+  try {
+    const response = await fetch(`/api/v1/applications/${applicationId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      return { error: err.error || `HTTP ${response.status}` }
+    }
+    const result = await response.json()
+    return { application: result.data }
+  } catch (e: any) {
+    return { error: e?.message ?? 'Failed to update application' }
+  }
+} 

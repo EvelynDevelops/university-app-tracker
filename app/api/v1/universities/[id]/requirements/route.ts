@@ -34,34 +34,39 @@ export async function GET(
     // Initialize Supabase client
     const supabase = supabaseServer()
 
-    // If application_id is provided, also fetch progress
+    // If application_id is provided, also fetch progress (LEFT JOIN behavior)
     if (applicationId && uuidRegex.test(applicationId)) {
-      const { data: requirements, error } = await supabase
-        .from('university_requirements')
-        .select(`
-          *,
-          application_requirement_progress!inner(
-            id,
-            status,
-            completed_at,
-            notes
-          )
-        `)
-        .eq('university_id', id)
-        .eq('application_requirement_progress.application_id', applicationId)
-        .order('order_index', { ascending: true })
+      const [requirementsRes, progressRes] = await Promise.all([
+        supabase
+          .from('university_requirements')
+          .select('*')
+          .eq('university_id', id)
+          .order('order_index', { ascending: true }),
+        supabase
+          .from('application_requirement_progress')
+          .select('id, application_id, requirement_id, status, completed_at, notes')
+          .eq('application_id', applicationId)
+      ])
 
-      if (error) {
-        console.error('Database error:', error)
+      if (requirementsRes.error || progressRes.error) {
+        console.error('Database error:', requirementsRes.error || progressRes.error)
         return NextResponse.json(
           { error: 'Failed to fetch university requirements' },
           { status: 500 }
         )
       }
 
-      return NextResponse.json({
-        data: requirements || []
-      })
+      const progressByRequirement: Record<string, any> = {}
+      for (const p of (progressRes.data || [])) {
+        progressByRequirement[p.requirement_id] = p
+      }
+
+      const merged = (requirementsRes.data || []).map((r: any) => ({
+        ...r,
+        application_requirement_progress: progressByRequirement[r.id] ? [progressByRequirement[r.id]] : []
+      }))
+
+      return NextResponse.json({ data: merged })
     }
 
     // If no application_id, fetch all requirements without progress

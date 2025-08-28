@@ -92,7 +92,9 @@ export async function GET(
  *   submitted_date?: string,
  *   decision_date?: string,
  *   decision_type?: string,
- *   notes?: string
+ *   notes?: string,
+ *   application_type?: string,
+ *   deadline?: string
  * }
  */
 export async function PUT(
@@ -115,17 +117,20 @@ export async function PUT(
     // Initialize Supabase client
     const supabase = supabaseServer()
 
+    // Build update payload (only include provided fields)
+    const updatePayload: Record<string, any> = {}
+    if (body.status !== undefined) updatePayload.status = body.status
+    if (body.submitted_date !== undefined) updatePayload.submitted_date = body.submitted_date
+    if (body.decision_date !== undefined) updatePayload.decision_date = body.decision_date
+    if (body.decision_type !== undefined) updatePayload.decision_type = body.decision_type
+    if (body.notes !== undefined) updatePayload.notes = body.notes
+    if (body.application_type !== undefined) updatePayload.application_type = body.application_type
+    if (body.deadline !== undefined) updatePayload.deadline = body.deadline
+
     // Update application
-    const { data: application, error } = await supabase
+    const { data: updatedRow, error } = await supabase
       .from('applications')
-      .update({
-        status: body.status,
-        submitted_date: body.submitted_date,
-        decision_date: body.decision_date,
-        decision_type: body.decision_type,
-        notes: body.notes,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single()
@@ -138,9 +143,40 @@ export async function PUT(
       )
     }
 
+    // Re-fetch with joined university details to keep response shape consistent with GET
+    const { data: applicationWithUniversity, error: refetchError } = await supabase
+      .from('applications')
+      .select(`
+        *,
+        universities (
+          id,
+          name,
+          city,
+          state,
+          country,
+          us_news_ranking,
+          acceptance_rate,
+          application_system,
+          tuition_in_state,
+          tuition_out_state,
+          application_fee,
+          deadlines
+        )
+      `)
+      .eq('id', id)
+      .single()
+
+    if (refetchError) {
+      console.error('Refetch error after update:', refetchError)
+      return NextResponse.json({
+        message: 'Application updated, but failed to include university details',
+        data: updatedRow
+      })
+    }
+
     return NextResponse.json({
       message: 'Application updated successfully',
-      data: application
+      data: applicationWithUniversity
     })
 
   } catch (error) {
