@@ -71,14 +71,27 @@ CREATE TABLE applications (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- application requirements
-CREATE TABLE application_requirements (
+-- university requirements
+CREATE TABLE university_requirements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  university_id UUID NOT NULL REFERENCES universities(id) ON DELETE CASCADE,
+  requirement_type VARCHAR(100), -- 'essay','recommendation','transcript','sat','act'...
+  requirement_name VARCHAR(255), -- 'Personal Statement', 'Letters of Recommendation'
+  is_required BOOLEAN DEFAULT true,
+  description TEXT,
+  order_index INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- student application requirement progress
+CREATE TABLE application_requirement_progress (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
-  requirement_type VARCHAR(100), -- 'essay','recommendation','transcript'...
+  requirement_id UUID NOT NULL REFERENCES university_requirements(id),
   status requirement_status DEFAULT 'not_started',
-  deadline DATE,
-  notes TEXT
+  completed_at TIMESTAMP,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- parent notes
