@@ -24,6 +24,11 @@ export interface UniversityAPIResponse {
   }
 }
 
+export interface PaginationParams {
+  page: number
+  itemsPerPage: number
+}
+
 // Filter mapping constants
 const RANKING_RANGES: { [key: string]: { min: number; max: number } } = {
   'Top 10': { min: 1, max: 10 },
@@ -42,7 +47,7 @@ const ACCEPTANCE_RATE_RANGES: { [key: string]: { min: number; max: number } } = 
 /**
  * Build query parameters from filter values
  */
-function buildQueryParams(filters?: FilterValues): URLSearchParams {
+function buildQueryParams(filters?: FilterValues, pagination?: PaginationParams): URLSearchParams {
   const params = new URLSearchParams()
   
   if (filters?.search) {
@@ -73,8 +78,13 @@ function buildQueryParams(filters?: FilterValues): URLSearchParams {
     params.append('program', filters.major)
   }
   
-  // Default pagination and sorting
-  params.append('limit', '50')
+  // Pagination parameters
+  const itemsPerPage = pagination?.itemsPerPage || 30
+  const page = pagination?.page || 1
+  const offset = (page - 1) * itemsPerPage
+  
+  params.append('limit', itemsPerPage.toString())
+  params.append('offset', offset.toString())
   params.append('sort_by', 'ranking')
   params.append('sort_order', 'asc')
   
@@ -139,13 +149,13 @@ async function mapUniversityDataWithRequirements(apiData: any[]): Promise<UIUniv
 /**
  * Fetch universities from API
  */
-export async function fetchUniversities(filters?: FilterValues): Promise<{
+export async function fetchUniversities(filters?: FilterValues, pagination?: PaginationParams): Promise<{
   universities: UIUniversity[]
   pagination: UniversityAPIResponse['pagination']
   error?: string
 }> {
   try {
-    const params = buildQueryParams(filters)
+    const params = buildQueryParams(filters, pagination)
     const response = await fetch(`/api/v1/universities?${params.toString()}`)
     
     if (!response.ok) {
@@ -162,7 +172,7 @@ export async function fetchUniversities(filters?: FilterValues): Promise<{
   } catch (error: any) {
     return {
       universities: [],
-      pagination: { total: 0, limit: 50, offset: 0, has_more: false },
+      pagination: { total: 0, limit: pagination?.itemsPerPage || 30, offset: 0, has_more: false },
       error: error?.message ?? 'Failed to load universities'
     }
   }
