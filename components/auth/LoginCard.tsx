@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { LoadingIcon } from '@/public/icons'
-import { supabaseBrowser } from '@/lib/supabase/helpers'
+import { supabaseBrowser } from '@/lib/auth/helpers'
 
 export default function LoginCard() {
   const [email, setEmail] = useState('')
