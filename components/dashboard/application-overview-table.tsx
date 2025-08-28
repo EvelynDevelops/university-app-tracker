@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -54,6 +55,12 @@ const applications = [
 ];
 
 function ContributorsOverviewTable() {
+  const router = useRouter()
+
+  const handleRowClick = (applicationId: string) => {
+    router.push(`/student/applications/${applicationId}`)
+  }
+
   return (
     <div className="max-w-3xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
       <h2 className="mb-4 text-xl font-semibold text-foreground">Applications Overview</h2>
@@ -69,7 +76,11 @@ function ContributorsOverviewTable() {
         </TableHeader>
         <TableBody>
           {applications.map((app) => (
-            <TableRow key={app.id} className="hover:bg-muted/40 transition-colors">
+            <TableRow 
+              key={app.id} 
+              className="hover:bg-muted/40 transition-colors cursor-pointer"
+              onClick={() => handleRowClick(app.id)}
+            >
               <TableCell className="font-medium">{app.university}</TableCell>
               <TableCell>{app.program}</TableCell>
               <TableCell>{app.deadline}</TableCell>

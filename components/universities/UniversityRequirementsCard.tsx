@@ -1,14 +1,48 @@
+import { useState, useEffect } from 'react'
 import { FileTextIcon } from '@/public/icons'
 
 interface UniversityRequirementsCardProps {
+  universityId: string
   applicationSystem: string
   applicationFee: number
 }
 
+interface Requirement {
+  id: string
+  requirement_type: string
+  requirement_name: string
+  description: string
+  is_required: boolean
+  order_index: number
+}
+
 export default function UniversityRequirementsCard({ 
+  universityId,
   applicationSystem, 
   applicationFee
 }: UniversityRequirementsCardProps) {
+  const [requirements, setRequirements] = useState<Requirement[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchRequirements = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/v1/universities/${universityId}/requirements`)
+        if (response.ok) {
+          const result = await response.json()
+          setRequirements(result.data || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch requirements:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRequirements()
+  }, [universityId])
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -17,54 +51,6 @@ export default function UniversityRequirementsCard({
       maximumFractionDigits: 0,
     }).format(amount)
   }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  }
-
-  // Common application requirements based on application system
-  const getRequirements = (system: string) => {
-    const commonRequirements = [
-      'High School Transcript',
-      'Standardized Test Scores (SAT/ACT)',
-      'Personal Statement/Essay',
-      'Letters of Recommendation',
-      'Application Fee'
-    ]
-
-    switch (system.toLowerCase()) {
-      case 'common app':
-        return [
-          ...commonRequirements,
-          'Common App Personal Essay',
-          'Supplemental Essays (if required)',
-          'Activities List',
-          'Honors & Awards'
-        ]
-      case 'coalition':
-        return [
-          ...commonRequirements,
-          'Coalition Personal Statement',
-          'Supplemental Essays (if required)',
-          'Activities & Achievements'
-        ]
-      case 'direct':
-        return [
-          ...commonRequirements,
-          'Institution-Specific Essays',
-          'Portfolio (if applicable)',
-          'Interview (if required)'
-        ]
-      default:
-        return commonRequirements
-    }
-  }
-
-  const requirements = getRequirements(applicationSystem)
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -101,14 +87,39 @@ export default function UniversityRequirementsCard({
           <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             Required Materials
           </div>
-          <div className="space-y-2">
-            {requirements.map((requirement, index) => (
-              <div key={index} className="flex items-center gap-3 text-sm">
-                <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
-                <span className="text-gray-700 dark:text-gray-300">{requirement}</span>
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-3 text-sm">
+                  <div className="w-2 h-2 bg-gray-300 rounded-full flex-shrink-0" />
+                  <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {requirements.map((requirement) => (
+                <div key={requirement.id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2" />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {requirement.requirement_name}
+                      </div>
+                      {requirement.description && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          {requirement.description}
+                        </div>
+                      )}
+                      <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                        {requirement.is_required ? 'Required' : 'Optional'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Additional Notes */}

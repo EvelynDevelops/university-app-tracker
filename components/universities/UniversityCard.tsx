@@ -86,12 +86,18 @@ export default function UniversityCard({
             <span>Application Requirements</span>
           </div>
           <div className="space-y-2">
-            {university.applicationRequirements.map((requirement, index) => (
-              <div key={index} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
-                <span className="line-clamp-1">{requirement}</span>
+            {university.applicationRequirements.length > 0 ? (
+              university.applicationRequirements.map((requirement, index) => (
+                <div key={index} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
+                  <span className="line-clamp-1">{requirement}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-gray-500 dark:text-gray-500 italic">
+                No requirements listed
               </div>
-            ))}
+            )}
           </div>
         </div>
 

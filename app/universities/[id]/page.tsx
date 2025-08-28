@@ -116,6 +116,7 @@ export default function UniversityDetailPage() {
               acceptanceRate={university.acceptance_rate}
             />
             <UniversityRequirementsCard 
+              universityId={university.id}
               applicationSystem={university.application_system}
               applicationFee={university.application_fee}
             />

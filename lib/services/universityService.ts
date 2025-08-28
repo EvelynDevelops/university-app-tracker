@@ -91,9 +91,49 @@ function mapUniversityData(apiData: any[]): UIUniversity[] {
     ranking: Number(row.us_news_ranking ?? 0),
     location: [row.city, row.state, row.country].filter(Boolean).join(', '),
     acceptanceRate: Number(row.acceptance_rate ?? 0),
-    applicationRequirements: [], // programs field doesn't exist in current schema
+    applicationRequirements: [], // Will be populated separately
     logo: row.logo,
   }))
+}
+
+/**
+ * Fetch requirements for a specific university
+ */
+async function fetchUniversityRequirements(universityId: string): Promise<string[]> {
+  try {
+    const response = await fetch(`/api/v1/universities/${universityId}/requirements`)
+    
+    if (!response.ok) {
+      console.warn(`Failed to fetch requirements for university ${universityId}`)
+      return []
+    }
+    
+    const result = await response.json()
+    return result.data?.map((req: any) => req.requirement_name) || []
+  } catch (error) {
+    console.warn(`Error fetching requirements for university ${universityId}:`, error)
+    return []
+  }
+}
+
+/**
+ * Map university data with requirements
+ */
+async function mapUniversityDataWithRequirements(apiData: any[]): Promise<UIUniversity[]> {
+  const universities = mapUniversityData(apiData)
+  
+  // Fetch requirements for each university
+  const universitiesWithRequirements = await Promise.all(
+    universities.map(async (university) => {
+      const requirements = await fetchUniversityRequirements(university.id)
+      return {
+        ...university,
+        applicationRequirements: requirements
+      }
+    })
+  )
+  
+  return universitiesWithRequirements
 }
 
 /**
@@ -113,7 +153,7 @@ export async function fetchUniversities(filters?: FilterValues): Promise<{
     }
     
     const result: UniversityAPIResponse = await response.json()
-    const universities = mapUniversityData(result.data)
+    const universities = await mapUniversityDataWithRequirements(result.data)
     
     return {
       universities,
@@ -143,7 +183,8 @@ export async function getUniversityById(id: string): Promise<{
     }
     
     const result = await response.json()
-    const university = mapUniversityData([result.data])[0]
+    const universities = await mapUniversityDataWithRequirements([result.data])
+    const university = universities[0]
     
     return { university }
   } catch (error: any) {
@@ -174,7 +215,7 @@ export async function getPopularUniversities(limit: number = 10): Promise<{
     }
     
     const result: UniversityAPIResponse = await response.json()
-    const universities = mapUniversityData(result.data)
+    const universities = await mapUniversityDataWithRequirements(result.data)
     
     return { universities }
   } catch (error: any) {
