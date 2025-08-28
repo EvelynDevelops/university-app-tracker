@@ -10,9 +10,11 @@ export default function RegisterPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center space-x-2 mb-6">
-              <div className="h-8 w-8 rounded-lg bg-blue-600" />
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-lg">
+              U
+            </div>
               <span className="text-xl font-bold text-gray-900 dark:text-white">
-                University Tracker
+                UniTracker
               </span>
             </Link>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -40,7 +42,7 @@ export default function RegisterPage() {
 
           {/* quote text */}
           <blockquote className="text-2xl font-semibold mb-8 leading-relaxed">
-            “Join UniTracker and keep every application organized. Stay ahead of your deadlines.”
+            “Join unitracker and keep every application organized. Stay ahead of your deadlines.”
           </blockquote>
 
           {/* features */}

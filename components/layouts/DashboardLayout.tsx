@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Sidebar,
   SidebarContent,
@@ -25,11 +26,13 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [userProfile, setUserProfile] = useState<{
     first_name: string | null
     email: string | null
   } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const isActive = (href: string) => pathname === href
 
@@ -107,7 +110,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={isActive('/student/messages')}>
                     <a href="/student/messages">
-                      <span>Parent Messages</span>
+                      <span>Notifications</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -123,18 +126,47 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <div className="flex items-center gap-2 px-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              {userProfile?.first_name ? userProfile.first_name.charAt(0).toUpperCase() : 'S'}
-            </div>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">
-                {loading ? 'Loading...' : (userProfile?.first_name || 'Student User')}
-              </span>
-              <span className="truncate text-xs">
-                {loading ? '...' : (userProfile?.email || 'student@example.com')}
-              </span>
-            </div>
+          <div className="relative">
+            <button
+              className="flex w-full items-center gap-2 px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
+              onClick={() => setMenuOpen(v => !v)}
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                {userProfile?.first_name ? userProfile.first_name.charAt(0).toUpperCase() : 'S'}
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">
+                  {loading ? 'Loading...' : (userProfile?.first_name || 'Student User')}
+                </span>
+                <span className="truncate text-xs">
+                  {loading ? '...' : (userProfile?.email || 'student@example.com')}
+                </span>
+              </div>
+              <div className="ml-auto text-xs text-gray-500">▾</div>
+            </button>
+            {menuOpen && (
+              <div className="absolute bottom-12 left-2 z-50 w-48 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
+                <button
+                  className="w-full text-left text-sm px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  onClick={() => { setMenuOpen(false); router.push('/auth/login') }}
+                >
+                  Switch account
+                </button>
+                <button
+                  className="w-full text-left text-sm px-3 py-2 text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  onClick={async () => {
+                    setMenuOpen(false)
+                    try {
+                      const supabase = supabaseBrowser()
+                      await supabase.auth.signOut()
+                    } catch {}
+                    router.push('/')
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </SidebarFooter>
       </Sidebar>

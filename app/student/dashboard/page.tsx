@@ -64,7 +64,6 @@ export default function StudentDashboard() {
     { id: 'in_progress', name: 'In Progress' },
     { id: 'submitted', name: 'Submitted' },
     { id: 'under_review', name: 'Under Review' },
-    { id: 'decision', name: 'Decision' },
   ]
 
   // Convert applications to pipeline cards
