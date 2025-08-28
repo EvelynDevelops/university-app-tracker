@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout'
 import { getLinkedStudents, Student } from '@/lib/services/parentService'
 import { Button } from '@/components/ui/Button'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
+import LinkStudentModal from '@/components/modals/LinkStudentModal'
 
 interface LinkedStudent extends Student {
   linkId: string
@@ -17,6 +18,7 @@ export default function ManageStudentsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [unlinking, setUnlinking] = useState<string | null>(null)
+  const [showLinkModal, setShowLinkModal] = useState(false)
 
   useEffect(() => {
     loadLinkedStudents()
@@ -79,7 +81,7 @@ export default function ManageStudentsPage() {
   }
 
   const unlinkStudent = async (studentId: string, studentName: string) => {
-    if (!confirm(`Are you sure you want to unlink ${studentName}? You will no longer be able to view their application progress.`)) {
+    if (!confirm(`Are you sure you want to remove ${studentName} from your account? You will no longer be able to view their application progress.`)) {
       return
     }
 
@@ -100,14 +102,14 @@ export default function ManageStudentsPage() {
         .eq('student_user_id', studentId)
 
       if (error) {
-        setError('Failed to unlink student')
+        setError('Failed to remove student')
         return
       }
 
       // Remove from local state
       setStudents(prev => prev.filter(s => s.user_id !== studentId))
     } catch (e) {
-      setError('Failed to unlink student')
+      setError('Failed to remove student')
     } finally {
       setUnlinking(null)
     }
@@ -131,17 +133,17 @@ export default function ManageStudentsPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Manage Student Links
+              My Students
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
               View and manage your linked student accounts
             </p>
           </div>
           <Button
-            onClick={() => router.push('/parent/onboarding')}
+            onClick={() => setShowLinkModal(true)}
             className="px-4"
           >
-            Link New Student
+            Add Student
           </Button>
         </div>
 
@@ -155,13 +157,13 @@ export default function ManageStudentsPage() {
           <div className="text-center py-12">
             <div className="text-muted-foreground mb-4">No students linked to your account</div>
             <div className="text-sm text-muted-foreground mb-6">
-              Link your child's student account to start monitoring their application progress.
+              Add your child's student account to start monitoring their application progress.
             </div>
             <Button
-              onClick={() => router.push('/parent/onboarding')}
+              onClick={() => setShowLinkModal(true)}
               className="px-6"
             >
-              Link Student Account
+              Add Student
             </Button>
           </div>
         ) : (
@@ -222,14 +224,14 @@ export default function ManageStudentsPage() {
                     >
                       View Applications
                     </Button>
-                    <Button
-                      onClick={() => unlinkStudent(student.user_id, `${student.first_name} ${student.last_name}`)}
-                      disabled={unlinking === student.user_id}
-                      className="px-3 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      variant="outline"
-                    >
-                      {unlinking === student.user_id ? 'Unlinking...' : 'Unlink'}
-                    </Button>
+                                         <Button
+                       onClick={() => unlinkStudent(student.user_id, `${student.first_name} ${student.last_name}`)}
+                       disabled={unlinking === student.user_id}
+                       className="px-3 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                       variant="outline"
+                     >
+                       {unlinking === student.user_id ? 'Removing...' : 'Remove'}
+                     </Button>
                   </div>
                 </div>
               ))}
@@ -237,6 +239,15 @@ export default function ManageStudentsPage() {
           </div>
         )}
       </div>
+      
+      <LinkStudentModal
+        open={showLinkModal}
+        onClose={() => setShowLinkModal(false)}
+        onSuccess={() => {
+          loadLinkedStudents()
+          setShowLinkModal(false)
+        }}
+      />
     </DashboardLayout>
   )
 } 

@@ -117,16 +117,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname.startsWith('/parent/students')}>
-          <a href="/parent/dashboard">
+        <SidebarMenuButton asChild isActive={isActive('/parent/manage-students')}>
+          <a href="/parent/manage-students">
             <span>My Students</span>
-          </a>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={isActive('/parent/onboarding')}>
-          <a href="/parent/onboarding">
-            <span>Link Students</span>
           </a>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -134,6 +127,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <SidebarMenuButton asChild isActive={isActive('/parent/manage-students')}>
           <a href="/parent/manage-students">
             <span>Manage Students</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isActive('/parent/universities')}>
+          <a href="/parent/universities">
+            <span>Universities</span>
           </a>
         </SidebarMenuButton>
       </SidebarMenuItem>

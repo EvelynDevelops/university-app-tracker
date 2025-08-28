@@ -45,19 +45,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/student/dashboard', req.url))
     }
 
-    // Check if parent needs onboarding
-    if (role === 'parent' && req.nextUrl.pathname === '/parent/dashboard') {
-      const supabase = createMiddlewareClient({ req, res })
-      const { data: existingLinks } = await supabase
-        .from('parent_links')
-        .select('student_user_id')
-        .eq('parent_user_id', user.id)
-        .limit(1)
 
-      if (!existingLinks || existingLinks.length === 0) {
-        return NextResponse.redirect(new URL('/parent/onboarding', req.url))
-      }
-    }
   }
 
   return res
