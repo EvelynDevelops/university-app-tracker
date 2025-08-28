@@ -26,23 +26,41 @@ export async function GET(_req: NextRequest) {
       if (!error && data) parentNotes = data
     }
 
-    // deadline notifications: within 14 days
+    // deadline notifications: 30 / 15 / 7 days before; and daily within last 7 days
     const today = new Date(); today.setHours(0,0,0,0)
-    const twoWeeks = new Date(today); twoWeeks.setDate(twoWeeks.getDate() + 14)
-    const deadlineNotifs = (apps || [])
-      .filter(a => a.deadline)
-      .filter(a => {
-        const d = new Date(a.deadline as any)
-        return d >= today && d <= twoWeeks
-      })
-      .map(a => ({
-        id: `dl-${a.id}`,
-        type: 'deadline',
-        title: a.universities?.name || 'University',
-        message: 'Upcoming deadline',
-        date: a.deadline,
-        application_id: a.id
-      }))
+    const deadlineNotifs: any[] = []
+    for (const a of (apps || [])) {
+      if (!a.deadline) continue
+      const d = new Date(a.deadline as any)
+      const msDiff = d.getTime() - today.getTime()
+      const days = Math.ceil(msDiff / (1000*60*60*24))
+      if (days < 0) continue // skip overdue for this rule
+
+      // Daily reminders within 7 days (including today)
+      if (days <= 7) {
+        deadlineNotifs.push({
+          id: `dl-daily-${a.id}-${days}`,
+          type: 'deadline',
+          title: a.universities?.name || 'University',
+          message: days === 0 ? 'Deadline today' : `Deadline in ${days} day${days>1?'s':''}`,
+          date: a.deadline,
+          application_id: a.id
+        })
+        continue
+      }
+
+      // Milestones at 30/15/7 (7 handled above by daily)
+      if (days === 30 || days === 15) {
+        deadlineNotifs.push({
+          id: `dl-milestone-${a.id}-${days}`,
+          type: 'deadline',
+          title: a.universities?.name || 'University',
+          message: `Deadline in ${days} days`,
+          date: a.deadline,
+          application_id: a.id
+        })
+      }
+    }
 
     const parentNotifs = parentNotes.map(n => ({
       id: `pn-${n.id}`,
