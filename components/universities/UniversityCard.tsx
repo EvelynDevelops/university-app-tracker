@@ -17,13 +17,17 @@ interface UniversityCardProps {
   className?: string
   onViewDetails?: (id: string) => void
   onApply?: (id: string) => void
+  isInApplicationList?: boolean
+  isAddingToApplication?: boolean
 }
 
 export default function UniversityCard({ 
   university, 
   className,
   onViewDetails,
-  onApply 
+  onApply,
+  isInApplicationList = false,
+  isAddingToApplication = false
 }: UniversityCardProps) {
   const router = useRouter()
 
@@ -113,8 +117,18 @@ export default function UniversityCard({
           <Button 
             className="flex-1"
             onClick={() => onApply?.(university.id)}
+            disabled={isInApplicationList || isAddingToApplication}
           >
-            Add to List
+            {isAddingToApplication ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Adding...
+              </div>
+            ) : isInApplicationList ? (
+              'Added to List'
+            ) : (
+              'Add to List'
+            )}
           </Button>
         </div>
       </div>

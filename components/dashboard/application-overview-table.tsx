@@ -1,64 +1,112 @@
 "use client";
 
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-
-const applications = [
-  {
-    id: "1",
-    university: "MIT",
-    program: "CS (MEng)",
-    deadline: "2025-01-05",
-    status: "In Progress",
-    stage: "Preparing",
-  },
-  {
-    id: "2",
-    university: "Stanford",
-    program: "CS (MS)",
-    deadline: "2025-01-10",
-    status: "Submitted",
-    stage: "Submitted",
-  },
-  {
-    id: "3",
-    university: "UCLA",
-    program: "Data Science (MS)",
-    deadline: "2024-12-20",
-    status: "Awaiting Decision",
-    stage: "Decision",
-  },
-  {
-    id: "4",
-    university: "CMU",
-    program: "Software Engineering (MSSE)",
-    deadline: "2025-02-01",
-    status: "In Progress",
-    stage: "To Do",
-  },
-  {
-    id: "5",
-    university: "UT Austin",
-    program: "ECE (MS)",
-    deadline: "2025-01-15",
-    status: "Accepted",
-    stage: "Decision",
-  },
-];
+} from "@/components/ui/table"
+import { getApplications, Application } from '@/lib/services/applicationService'
 
 function ContributorsOverviewTable() {
   const router = useRouter()
+  const [applications, setApplications] = useState<Application[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadApplications()
+  }, [])
+
+  const loadApplications = async () => {
+    try {
+      setLoading(true)
+      const result = await getApplications()
+      
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setApplications(result.applications)
+      }
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load applications')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleRowClick = (applicationId: string) => {
     router.push(`/student/applications/${applicationId}`)
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ACCEPTED':
+        return 'bg-green-100 text-green-700'
+      case 'SUBMITTED':
+        return 'bg-blue-100 text-blue-700'
+      case 'UNDER_REVIEW':
+        return 'bg-purple-100 text-purple-700'
+      case 'IN_PROGRESS':
+        return 'bg-yellow-100 text-yellow-700'
+      case 'WAITLISTED':
+        return 'bg-orange-100 text-orange-700'
+      case 'REJECTED':
+        return 'bg-red-100 text-red-700'
+      default:
+        return 'bg-gray-100 text-gray-700'
+    }
+  }
+
+  const formatStatus = (status: string) => {
+    return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Not set'
+    return new Date(dateString).toLocaleDateString()
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
+        <h2 className="mb-4 text-xl font-semibold text-foreground">Applications Overview</h2>
+        <div className="flex items-center justify-center py-8">
+          <div className="text-muted-foreground">Loading applications...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-3xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
+        <h2 className="mb-4 text-xl font-semibold text-foreground">Applications Overview</h2>
+        <div className="flex items-center justify-center py-8">
+          <div className="text-red-600">{error}</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (applications.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto rounded-xl border border-border bg-background p-6 shadow-sm">
+        <h2 className="mb-4 text-xl font-semibold text-foreground">Applications Overview</h2>
+        <div className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <div className="text-muted-foreground mb-2">No applications yet</div>
+            <div className="text-sm text-muted-foreground">
+              Start by adding universities to your application list
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -68,10 +116,10 @@ function ContributorsOverviewTable() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[160px]">University</TableHead>
-            <TableHead>Program</TableHead>
+            <TableHead>Location</TableHead>
             <TableHead className="w-[130px]">Deadline</TableHead>
             <TableHead className="w-[140px]">Status</TableHead>
-            <TableHead className="text-right w-[120px]">Stage</TableHead>
+            <TableHead className="text-right w-[120px]">Type</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -81,40 +129,25 @@ function ContributorsOverviewTable() {
               className="hover:bg-muted/40 transition-colors cursor-pointer"
               onClick={() => handleRowClick(app.id)}
             >
-              <TableCell className="font-medium">{app.university}</TableCell>
-              <TableCell>{app.program}</TableCell>
-              <TableCell>{app.deadline}</TableCell>
+              <TableCell className="font-medium">
+                {app.university?.name || 'Unknown University'}
+              </TableCell>
+              <TableCell>{app.university?.location || 'N/A'}</TableCell>
+              <TableCell>{formatDate(app.deadline)}</TableCell>
               <TableCell>
                 <span
-                  className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${
-                    app.status === "Accepted"
-                      ? "bg-green-100 text-green-700"
-                      : app.status === "Submitted"
-                      ? "bg-blue-100 text-blue-700"
-                      : app.status === "Awaiting Decision"
-                      ? "bg-purple-100 text-purple-700"
-                      : app.status === "In Progress"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-gray-200 text-gray-700"
-                  }`}
+                  className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(app.status)}`}
                 >
-                  {app.status}
+                  {formatStatus(app.status)}
                 </span>
               </TableCell>
-              <TableCell className="text-right">{app.stage}</TableCell>
+              <TableCell className="text-right">
+                {app.application_type ? formatStatus(app.application_type) : 'Not set'}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={4} className="text-right font-semibold">
-              Total Applications
-            </TableCell>
-            <TableCell className="text-right font-bold text-foreground">{applications.length}</TableCell>
-          </TableRow>
-        </TableFooter>
       </Table>
-      <p className="mt-4 text-center text-sm text-muted-foreground">track your university applications</p>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { FilterValues } from '@/components/universities/UniversityFilterBar'
 import UniversitiesFilterSection from '@/components/universities/UniversitiesFilterSection'
 import Pagination from '@/components/ui/pagination'
 import { fetchUniversities, UIUniversity, PaginationParams } from '@/lib/services/universityService'
+import { addToApplicationList, isUniversityInApplicationList } from '@/lib/services/applicationService'
 
 export default function UniversitiesPage() {
   const [universities, setUniversities] = useState<UIUniversity[]>([])
@@ -23,6 +24,9 @@ export default function UniversitiesPage() {
     totalItems: 0,
     itemsPerPage: 30
   })
+  const [applicationStatus, setApplicationStatus] = useState<{ [key: string]: boolean }>({})
+  const [addingToApplication, setAddingToApplication] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Function to load universities using service
   const loadUniversities = async (filters?: FilterValues, paginationParams?: PaginationParams) => {
@@ -43,12 +47,26 @@ export default function UniversitiesPage() {
           currentPage: paginationParams?.page || 1,
           itemsPerPage: paginationParams?.itemsPerPage || prev.itemsPerPage
         }))
+        // Check application status for each university
+        checkApplicationStatus(result.universities)
       }
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load universities')
     } finally {
       setLoading(false)
     }
+  }
+
+  // Check which universities are already in the application list
+  const checkApplicationStatus = async (universities: UIUniversity[]) => {
+    const statusMap: { [key: string]: boolean } = {}
+    
+    for (const university of universities) {
+      const { isInList } = await isUniversityInApplicationList(university.id)
+      statusMap[university.id] = isInList
+    }
+    
+    setApplicationStatus(statusMap)
   }
 
   // Initial load
@@ -79,8 +97,28 @@ export default function UniversitiesPage() {
     console.log('View details for university:', id)
   }
 
-  const handleApply = (id: string) => {
-    console.log('Apply to university:', id)
+  const handleApply = async (id: string) => {
+    try {
+      setAddingToApplication(id)
+      setSuccessMessage(null)
+      
+      const result = await addToApplicationList({ university_id: id })
+      
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setSuccessMessage(result.message || 'Successfully added to application list')
+        // Update the application status for this university
+        setApplicationStatus(prev => ({
+          ...prev,
+          [id]: true
+        }))
+      }
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to add to application list')
+    } finally {
+      setAddingToApplication(null)
+    }
   }
 
   const handleFiltersChange = (newFilters: FilterValues) => {
@@ -122,6 +160,32 @@ export default function UniversitiesPage() {
           onFiltersChange={handleFiltersChange}
           onSearch={handleSearch}
         />
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-green-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                  {successMessage}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Results Summary */}
         <div className="mb-8">
@@ -197,6 +261,8 @@ export default function UniversitiesPage() {
             loading={loading}
             onViewDetails={handleViewDetails}
             onApply={handleApply}
+            applicationStatus={applicationStatus}
+            addingToApplication={addingToApplication}
           />
         )}
 

@@ -5,10 +5,13 @@ import DashboardLayout from '@/components/layouts/DashboardLayout'
 import Pipeline, { PipelineStage, PipelineCard } from '@/components/dashboard/Pipeline'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
 import AcademicProfileModal from '@/components/modals/AcademicProfileModal'
+import { getApplications, Application } from '@/lib/services/applicationService'
 
 export default function StudentDashboard() {
   const [firstName, setFirstName] = useState<string>('')
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false)
+  const [applications, setApplications] = useState<Application[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     (async () => {
@@ -37,19 +40,41 @@ export default function StudentDashboard() {
     })()
   }, [])
 
+  useEffect(() => {
+    loadApplications()
+  }, [])
+
+  const loadApplications = async () => {
+    try {
+      setLoading(true)
+      const result = await getApplications()
+      
+      if (!result.error) {
+        setApplications(result.applications)
+      }
+    } catch (e) {
+      // Handle error silently for dashboard
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const stages: PipelineStage[] = [
-    { id: 'to-do', name: 'To Do' },
-    { id: 'preparing', name: 'Preparing' },
+    { id: 'not_started', name: 'Not Started' },
+    { id: 'in_progress', name: 'In Progress' },
     { id: 'submitted', name: 'Submitted' },
     { id: 'decision', name: 'Decision' },
   ]
 
-  const cards: PipelineCard[] = [
-    { id: '1', title: 'MIT', subtitle: 'Early Action', stageId: 'to-do' },
-    { id: '2', title: 'Stanford', subtitle: 'Regular', stageId: 'preparing' },
-    { id: '3', title: 'UCLA', subtitle: 'Submitted 10/10', stageId: 'submitted' },
-    { id: '4', title: 'CMU', subtitle: 'Awaiting decision', stageId: 'decision' },
-  ]
+  // Convert applications to pipeline cards
+  const cards: PipelineCard[] = applications.map(app => ({
+    id: app.id,
+    title: app.university?.name || 'Unknown University',
+    subtitle: app.application_type ? app.application_type.replace('_', ' ') : 'Not set',
+    stageId: app.status.toLowerCase().replace('_', ' ') === 'not started' ? 'not_started' : 
+             app.status.toLowerCase().replace('_', ' ') === 'in progress' ? 'in_progress' :
+             app.status.toLowerCase().replace('_', ' ') === 'submitted' ? 'submitted' : 'decision'
+  }))
 
   return (
     <DashboardLayout>
@@ -61,29 +86,22 @@ export default function StudentDashboard() {
           Welcome to your student dashboard. Here you can track your applications and manage your university journey.
         </p>
         
-        {/* Metric cards */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-card rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-2">Total Applications</h3>
-            <p className="text-3xl font-bold text-blue-600">5</p>
-          </div>
-          <div className="bg-card rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-2">Submitted</h3>
-            <p className="text-3xl font-bold text-green-600">3</p>
-          </div>
-          <div className="bg-card rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-2">In Progress</h3>
-            <p className="text-3xl font-bold text-yellow-600">2</p>
-          </div>
-          <div className="bg-card rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-2">Accepted</h3>
-            <p className="text-3xl font-bold text-purple-600">1</p>
-          </div>
-        </div>
-
         {/* Pipeline */}
         <div className="mt-10">
-          <Pipeline stages={stages} cards={cards} />
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">Loading applications...</div>
+            </div>
+          ) : applications.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-muted-foreground mb-2">No applications yet</div>
+              <div className="text-sm text-muted-foreground">
+                Start by adding universities to your application list
+              </div>
+            </div>
+          ) : (
+            <Pipeline stages={stages} cards={cards} />
+          )}
         </div>
       </div>
       <AcademicProfileModal

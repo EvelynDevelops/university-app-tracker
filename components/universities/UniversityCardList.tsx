@@ -19,6 +19,8 @@ interface UniversityCardListProps {
   loading?: boolean
   onViewDetails?: (id: string) => void
   onApply?: (id: string) => void
+  applicationStatus?: { [key: string]: boolean }
+  addingToApplication?: string | null
 }
 
 // Skeleton component for university cards
@@ -44,7 +46,9 @@ export default function UniversityCardList({
   className,
   loading = false,
   onViewDetails,
-  onApply 
+  onApply,
+  applicationStatus = {},
+  addingToApplication = null
 }: UniversityCardListProps) {
   if (loading) {
     return (
@@ -67,6 +71,8 @@ export default function UniversityCardList({
             university={university}
             onViewDetails={onViewDetails}
             onApply={onApply}
+            isInApplicationList={applicationStatus[university.id] || false}
+            isAddingToApplication={addingToApplication === university.id}
           />
         ))}
       </div>
