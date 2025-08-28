@@ -17,7 +17,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { usePathname } from 'next/navigation'
-import { supabaseBrowser } from '@/lib/auth/helpers'
+import { supabaseBrowser } from '@/lib/supabase/helpers'
 
 interface DashboardLayoutProps {
   children: React.ReactNode

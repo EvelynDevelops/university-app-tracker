@@ -1,4 +1,5 @@
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { MapPinIcon, UsersIcon, FileTextIcon } from '@/public/icons'
@@ -24,6 +25,12 @@ export default function UniversityCard({
   onViewDetails,
   onApply 
 }: UniversityCardProps) {
+  const router = useRouter()
+
+  const handleViewDetails = () => {
+    router.push(`/universities/${university.id}`)
+  }
+
   return (
     <div className={cn(
       "bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200 dark:border-gray-700 flex flex-col h-full",
@@ -93,7 +100,7 @@ export default function UniversityCard({
           <Button 
             variant="outline" 
             className="flex-1"
-            onClick={() => onViewDetails?.(university.id)}
+            onClick={handleViewDetails}
           >
             View Details
           </Button>
