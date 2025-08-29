@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/auth/PasswordInput'
+import MyParentsSection from '@/components/settings/MyParentsSection'
 import { 
   LockIcon,
   BellIcon,
@@ -17,8 +18,6 @@ import { supabaseBrowser } from '@/lib/supabase/helpers'
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile')
   const [loading, setLoading] = useState(false)
-  const [parentCode, setParentCode] = useState('')
-  const [copied, setCopied] = useState(false)
   
   // Profile settings
   const [firstName, setFirstName] = useState('')
@@ -36,20 +35,7 @@ export default function SettingsPage() {
   const [applicationUpdates, setApplicationUpdates] = useState(true)
   const [deadlineReminders, setDeadlineReminders] = useState(true)
   
-  // Generate parent link code
-  const generateParentCode = () => {
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase()
-    setParentCode(code)
-  }
-  
-  // Copy parent code to clipboard
-  const copyToClipboard = async () => {
-    if (parentCode) {
-      await navigator.clipboard.writeText(parentCode)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
+
   
   // Save profile settings
   const saveProfile = async () => {
@@ -140,7 +126,7 @@ export default function SettingsPage() {
     { id: 'profile', label: 'Academic Profile', icon: UsersIcon },
     { id: 'security', label: 'Security', icon: LockIcon },
     { id: 'notifications', label: 'Notifications', icon: BellIcon },
-    { id: 'parent-link', label: 'Link Parent', icon: UsersIcon },
+    { id: 'my-parents', label: 'My Parents', icon: UsersIcon },
   ]
 
   return (
@@ -348,67 +334,13 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Parent Link Settings */}
-              {activeTab === 'parent-link' && (
+              {/* My Parents Settings */}
+              {activeTab === 'my-parents' && (
                 <div className="p-6">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                    Link Parent Account
+                    My Parents
                   </h2>
-                  <div className="space-y-6">
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                      <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                        How it works
-                      </h3>
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        Generate a unique code and share it with your parent. They can use this code to link their account and view your application progress.
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4">
-                        <Button
-                          onClick={generateParentCode}
-                          disabled={loading}
-                          className="flex-shrink-0"
-                        >
-                          {loading ? 'Generating...' : 'Generate Code'}
-                        </Button>
-                        {parentCode && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Code:</span>
-                            <code className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono">
-                              {parentCode}
-                            </code>
-                            <button
-                              onClick={copyToClipboard}
-                              className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                            >
-                              {copied ? (
-                                <CheckIcon className="w-4 h-4 text-green-500" />
-                              ) : (
-                                <CopyIcon className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {parentCode && (
-                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                            Instructions for your parent:
-                          </h4>
-                          <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
-                            <li>Go to the UniTracker website</li>
-                            <li>Click "Sign Up" and select "Parent" role</li>
-                            <li>During registration, enter the code: <strong>{parentCode}</strong></li>
-                            <li>Complete the registration process</li>
-                            <li>They will now be able to view your application progress</li>
-                          </ol>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <MyParentsSection />
                 </div>
               )}
             </div>
