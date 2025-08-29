@@ -13,9 +13,10 @@ type UploadCardProps = {
   onSelect: (files: File[]) => void
   onDelete?: (objectName: string) => void
   className?: string
+  readOnly?: boolean
 }
 
-export default function UploadCard({ title, accept, items, loading, onSelect, onDelete, className }: UploadCardProps) {
+export default function UploadCard({ title, accept, items, loading, onSelect, onDelete, className, readOnly = false }: UploadCardProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   const handleClick = () => inputRef.current?.click()
@@ -30,10 +31,12 @@ export default function UploadCard({ title, accept, items, loading, onSelect, on
     <div className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 ${className || ''}`}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
-        <div className="flex items-center gap-3">
-          <input ref={inputRef} type="file" accept={accept} onChange={handleChange} className="hidden" multiple />
-          <Button onClick={handleClick} disabled={!!loading} className="py-1 px-3 text-sm">{loading ? 'Uploading...' : 'Choose file'}</Button>
-        </div>
+        {!readOnly && (
+          <div className="flex items-center gap-3">
+            <input ref={inputRef} type="file" accept={accept} onChange={handleChange} className="hidden" multiple />
+            <Button onClick={handleClick} disabled={!!loading} className="py-1 px-3 text-sm">{loading ? 'Uploading...' : 'Choose file'}</Button>
+          </div>
+        )}
       </div>
       {(!items || items.length === 0) ? (
         <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">No files uploaded</div>
@@ -46,7 +49,7 @@ export default function UploadCard({ title, accept, items, loading, onSelect, on
               ) : (
                 <span className="truncate max-w-[70%]">{it.name}</span>
               )}
-              {onDelete && it.objectName && (
+              {!readOnly && onDelete && it.objectName && (
                 <button
                   onClick={() => onDelete(it.objectName!)}
                   className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"

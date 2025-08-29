@@ -35,42 +35,71 @@ export default function ManageStudentsPage() {
         return
       }
 
-      // Get linked students with link information
-      const { data: links, error } = await supabase
+      // Get linked students
+      const { data: links, error: linksError } = await supabase
         .from('parent_links')
-        .select(`
-          student_user_id,
-          profiles!parent_links_student_user_id_fkey (
-            user_id,
-            first_name,
-            last_name,
-            email
-          ),
-          student_profile (
-            graduation_year,
-            gpa,
-            sat_score,
-            act_score
-          )
-        `)
+        .select('student_user_id')
         .eq('parent_user_id', user.id)
 
-      if (error) {
+      if (linksError) {
+        console.error('Parent links error:', linksError)
         setError('Failed to load linked students')
         return
       }
 
-      const linkedStudents: LinkedStudent[] = (links || []).map(link => ({
-        user_id: link.student_user_id,
-        first_name: link.profiles?.first_name || '',
-        last_name: link.profiles?.last_name || '',
-        email: link.profiles?.email || '',
-        graduation_year: link.student_profile?.graduation_year,
-        gpa: link.student_profile?.gpa,
-        sat_score: link.student_profile?.sat_score,
-        act_score: link.student_profile?.act_score,
-        linkId: link.student_user_id // Using student_user_id as link identifier
-      }))
+      if (!links || links.length === 0) {
+        setStudents([])
+        return
+      }
+
+      // Get student profiles
+      const studentIds = links.map(l => l.student_user_id)
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name, email')
+        .in('user_id', studentIds)
+
+      if (profilesError) {
+        console.error('Student profiles error:', profilesError)
+        setError('Failed to load student profiles')
+        return
+      }
+
+      // Get student academic profiles
+      const { data: academicProfiles, error: academicError } = await supabase
+        .from('student_profile')
+        .select('user_id, graduation_year, gpa, sat_score, act_score')
+        .in('user_id', studentIds)
+
+      if (academicError) {
+        console.error('Academic profiles error:', academicError)
+        // Continue without academic profiles
+      }
+
+      // Create maps for easy lookup
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+      const academicMap = new Map((academicProfiles || []).map(p => [p.user_id, p]))
+
+      const linkedStudents: LinkedStudent[] = studentIds
+        .map(studentId => {
+          const profile = profileMap.get(studentId)
+          const academic = academicMap.get(studentId)
+          
+          if (!profile) return null
+          
+          return {
+            user_id: studentId,
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || '',
+            email: profile.email || '',
+            graduation_year: academic?.graduation_year || undefined,
+            gpa: academic?.gpa || undefined,
+            sat_score: academic?.sat_score || undefined,
+            act_score: academic?.act_score || undefined,
+            linkId: studentId
+          } as LinkedStudent
+        })
+        .filter((student): student is LinkedStudent => student !== null)
 
       setStudents(linkedStudents)
     } catch (e) {

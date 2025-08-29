@@ -117,9 +117,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={isActive('/parent/manage-students')}>
-          <a href="/parent/manage-students">
-            <span>My Students</span>
+        <SidebarMenuButton asChild isActive={isActive('/parent/academic-profile')}>
+          <a href="/parent/academic-profile">
+            <span>Academic Profile</span>
           </a>
         </SidebarMenuButton>
       </SidebarMenuItem>
