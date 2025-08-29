@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase/server'
+import { supabaseBrowser } from '@/lib/supabase/helpers'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = supabaseServer()
+    const supabase = supabaseBrowser()
     const { data: { user }, error: authErr } = await supabase.auth.getUser()
     
     if (authErr || !user) {
@@ -55,6 +55,35 @@ export async function GET(request: NextRequest) {
           error: error?.message,
           count: links?.length || 0
         }
+
+        // Test 4: Get student profiles for linked students
+        if (links && links.length > 0) {
+          const studentIds = links.map(l => l.student_user_id)
+          const { data: studentProfiles, error: studentError } = await supabase
+            .from('profiles')
+            .select('user_id, first_name, last_name, email, role')
+            .in('user_id', studentIds)
+
+          debugInfo.student_profiles = {
+            success: !studentError,
+            data: studentProfiles,
+            error: studentError?.message,
+            count: studentProfiles?.length || 0
+          }
+
+          // Test 5: Get academic profiles for these students
+          const { data: academicProfiles, error: academicError } = await supabase
+            .from('student_profile')
+            .select('*')
+            .in('user_id', studentIds)
+
+          debugInfo.academic_profiles = {
+            success: !academicError,
+            data: academicProfiles,
+            error: academicError?.message,
+            count: academicProfiles?.length || 0
+          }
+        }
       } catch (e) {
         debugInfo.parent_links = {
           success: false,
@@ -63,21 +92,42 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Test 4: Get all profiles (for debugging)
+    // Test 6: Get all student profiles (for debugging)
     try {
-      const { data: allProfiles, error } = await supabase
+      const { data: allStudentProfiles, error } = await supabase
         .from('profiles')
         .select('user_id, first_name, last_name, email, role')
+        .eq('role', 'student')
         .limit(10)
       
-      debugInfo.all_profiles = {
+      debugInfo.all_student_profiles = {
         success: !error,
-        data: allProfiles,
+        data: allStudentProfiles,
         error: error?.message,
-        count: allProfiles?.length || 0
+        count: allStudentProfiles?.length || 0
       }
     } catch (e) {
-      debugInfo.all_profiles = {
+      debugInfo.all_student_profiles = {
+        success: false,
+        error: e instanceof Error ? e.message : 'Unknown error'
+      }
+    }
+
+    // Test 7: Get all academic profiles (for debugging)
+    try {
+      const { data: allAcademicProfiles, error } = await supabase
+        .from('student_profile')
+        .select('*')
+        .limit(10)
+      
+      debugInfo.all_academic_profiles = {
+        success: !error,
+        data: allAcademicProfiles,
+        error: error?.message,
+        count: allAcademicProfiles?.length || 0
+      }
+    } catch (e) {
+      debugInfo.all_academic_profiles = {
         success: false,
         error: e instanceof Error ? e.message : 'Unknown error'
       }

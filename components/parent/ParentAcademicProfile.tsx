@@ -6,6 +6,8 @@ interface ParentAcademicProfileProps {
 }
 
 export default function ParentAcademicProfile({ students }: ParentAcademicProfileProps) {
+  console.log('ParentAcademicProfile received students:', students)
+  
   if (students.length === 0) return null
 
   return (
@@ -35,61 +37,33 @@ export default function ParentAcademicProfile({ students }: ParentAcademicProfil
             </div>
 
             <div className="space-y-3">
-              {student.graduation_year ? (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Graduation Year:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {student.graduation_year}
-                  </span>
-                </div>
-              ) : (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Graduation Year:</span>
-                  <span className="text-sm text-gray-400 dark:text-gray-500">Not set</span>
-                </div>
-              )}
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Graduation Year:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {student.graduation_year || <span className="text-gray-400 dark:text-gray-500">Not set</span>}
+                </span>
+              </div>
 
-              {student.gpa ? (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">GPA:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {student.gpa}
-                  </span>
-                </div>
-              ) : (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">GPA:</span>
-                  <span className="text-sm text-gray-400 dark:text-gray-500">Not set</span>
-                </div>
-              )}
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">GPA:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {student.gpa || <span className="text-gray-400 dark:text-gray-500">Not set</span>}
+                </span>
+              </div>
 
-              {student.sat_score ? (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">SAT Score:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {student.sat_score}
-                  </span>
-                </div>
-              ) : (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">SAT Score:</span>
-                  <span className="text-sm text-gray-400 dark:text-gray-500">Not set</span>
-                </div>
-              )}
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">SAT Score:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {student.sat_score || <span className="text-gray-400 dark:text-gray-500">Not set</span>}
+                </span>
+              </div>
 
-              {student.act_score ? (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">ACT Score:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {student.act_score}
-                  </span>
-                </div>
-              ) : (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">ACT Score:</span>
-                  <span className="text-sm text-gray-400 dark:text-gray-500">Not set</span>
-                </div>
-              )}
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">ACT Score:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {student.act_score || <span className="text-gray-400 dark:text-gray-500">Not set</span>}
+                </span>
+              </div>
 
               <div>
                 <span className="text-sm text-gray-600 dark:text-gray-400">Target Countries:</span>

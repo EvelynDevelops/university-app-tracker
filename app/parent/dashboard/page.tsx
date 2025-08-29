@@ -7,11 +7,10 @@ import { getLinkedStudents, Student, checkParentOnboarding } from '@/lib/service
 import { supabaseBrowser } from '@/lib/supabase/helpers'
 import ParentOverview from '@/components/parent/ParentOverview'
 import ParentApplicationTable from '@/components/parent/ParentApplicationTable'
-import ParentAcademicProfile from '@/components/parent/ParentAcademicProfile'
 import LinkStudentModal from '@/components/modals/LinkStudentModal'
 
 export default function ParentDashboard() {
-  const [firstName, setFirstName] = useState<string>('')
+  const [studentName, setStudentName] = useState<string>('')
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -19,27 +18,11 @@ export default function ParentDashboard() {
   const router = useRouter()
 
   useEffect(() => {
-    loadParentProfile()
     checkOnboarding()
     loadStudents()
   }, [])
 
-  const loadParentProfile = async () => {
-    try {
-      const supabase = supabaseBrowser()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('first_name')
-          .eq('user_id', user.id)
-          .single()
-        if (profile?.first_name) setFirstName(profile.first_name)
-      }
-    } catch (e) {
-      // no-op
-    }
-  }
+
 
   const checkOnboarding = async () => {
     try {
@@ -62,6 +45,11 @@ export default function ParentDashboard() {
         setError(result.error)
       } else if (result.students) {
         setStudents(result.students)
+        // Set the first student's name for the title
+        if (result.students.length > 0) {
+          const firstStudent = result.students[0]
+          setStudentName(`${firstStudent.first_name} ${firstStudent.last_name}`)
+        }
       }
     } catch (e) {
       console.error('Error loading students:', e)
@@ -77,10 +65,10 @@ export default function ParentDashboard() {
     <DashboardLayout>
       <div className="p-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-          Your Child's Dashboard
+          Hi! {studentName}'s Parent
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mb-8">
-          Monitor your child's college application progress and academic profile
+          Monitor your child's college application progress
         </p>
 
         {loading ? (
@@ -110,17 +98,9 @@ export default function ParentDashboard() {
             {/* Overview Stats */}
             <ParentOverview />
             
-            {/* Main Content Area - Left/Right Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Side - Applications Table */}
-              <div className="lg:col-span-2">
-                <ParentApplicationTable students={students} />
-              </div>
-              
-              {/* Right Side - Academic Profile */}
-              <div className="lg:col-span-1">
-                <ParentAcademicProfile students={students} />
-              </div>
+            {/* Applications Table */}
+            <div className="w-full">
+              <ParentApplicationTable students={students} />
             </div>
           </div>
         )}

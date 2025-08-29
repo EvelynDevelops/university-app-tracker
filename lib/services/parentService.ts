@@ -115,30 +115,43 @@ class ParentService {
         // Continue without academic profiles
       }
 
+      console.log('Student IDs:', studentIds)
+      console.log('Academic profiles found:', academicProfiles)
+      
       const academicMap = new Map((academicProfiles || []).map(p => [p.user_id, p]))
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
 
-             const students: Student[] = studentIds
-         .map(studentId => {
-           const profile = profileMap.get(studentId)
-           const academic = academicMap.get(studentId)
-           
-           if (!profile) return null
-           
-           return {
-             user_id: profile.user_id,
-             first_name: profile.first_name || '',
-             last_name: profile.last_name || '',
-             email: profile.email || '',
-             graduation_year: academic?.graduation_year,
-             gpa: academic?.gpa,
-             sat_score: academic?.sat_score,
-             act_score: academic?.act_score,
-             target_countries: academic?.target_countries,
-             intended_majors: academic?.intended_majors,
-           } as Student
-         })
-         .filter((student): student is Student => student !== null)
+      console.log('Academic map:', academicMap)
+      console.log('Profile map:', profileMap)
+
+      const students: Student[] = studentIds
+        .map(studentId => {
+          const profile = profileMap.get(studentId)
+          const academic = academicMap.get(studentId)
+          
+          console.log(`Processing student ${studentId}:`, { profile, academic })
+          
+          if (!profile) return null
+          
+          const student = {
+            user_id: profile.user_id,
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || '',
+            email: profile.email || '',
+            graduation_year: academic?.graduation_year ? Number(academic.graduation_year) : undefined,
+            gpa: academic?.gpa ? Number(academic.gpa) : undefined,
+            sat_score: academic?.sat_score ? Number(academic.sat_score) : undefined,
+            act_score: academic?.act_score ? Number(academic.act_score) : undefined,
+            target_countries: academic?.target_countries || undefined,
+            intended_majors: academic?.intended_majors || undefined,
+          } as Student
+          
+          console.log(`Created student object:`, student)
+          return student
+        })
+        .filter((student): student is Student => student !== null)
+
+      console.log('Final students array:', students)
 
       return { students }
     } catch (error) {
