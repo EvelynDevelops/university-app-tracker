@@ -53,6 +53,30 @@ export default function AcademicProfileModal({ open, onClose, onSaved }: Props) 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // First, ensure the user has a profile record
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, role')
+        .eq('user_id', user.id)
+        .single()
+
+      if (profileError || !profile) {
+        // Create profile record if it doesn't exist
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .upsert({
+            user_id: user.id,
+            role: 'student',
+            first_name: user.user_metadata?.first_name || null,
+            last_name: user.user_metadata?.last_name || null,
+            email: user.email
+          }, { onConflict: 'user_id' })
+
+        if (createProfileError) {
+          throw new Error(`Failed to create profile: ${createProfileError.message}`)
+        }
+      }
+
       const payload = {
         user_id: user.id,
         graduation_year: graduationYear ? Number(graduationYear) : null,
