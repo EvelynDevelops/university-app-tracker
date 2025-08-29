@@ -20,7 +20,6 @@ import {
 import { usePathname } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
 import NotificationsBell from '@/components/layouts/NotificationsBell'
-import ParentNotificationsBell from '@/components/layouts/ParentNotificationsBell'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -230,7 +229,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{getPortalTitle()}</h1>
           </div>
           {isStudent && <NotificationsBell />}
-          {isParent && <ParentNotificationsBell />}
         </header>
 
         {/* Main content */}
