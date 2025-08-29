@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import DashboardLayout from '@/components/layouts/DashboardLayout'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
 import AcademicProfileModal from '@/components/modals/AcademicProfileModal'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import UploadCard, { UploadItem } from '@/components/shared/UploadCard'
 
  type Profile = {

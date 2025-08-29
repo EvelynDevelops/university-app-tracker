@@ -1,5 +1,5 @@
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { MapPinIcon, FileTextIcon, ChevronDownIcon } from '@/public/icons'
 
 interface UniversityDetailHeaderProps {

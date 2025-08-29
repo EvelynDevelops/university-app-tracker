@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { MapPinIcon, GraduationCapIcon, StarIcon, UsersIcon, SearchIcon, ChevronDownIcon } from '@/public/icons'
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/FilterBar'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/filter-bar'
 
 interface UniversityFilterBarProps {
   onFiltersChange: (filters: FilterValues) => void

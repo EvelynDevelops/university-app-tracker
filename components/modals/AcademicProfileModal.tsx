@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 type Props = {
   open: boolean

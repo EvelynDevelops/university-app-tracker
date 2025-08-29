@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useRef } from 'react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 export type UploadItem = { name: string; url?: string; objectName?: string }
 

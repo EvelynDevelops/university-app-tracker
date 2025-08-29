@@ -1,7 +1,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { MapPinIcon, UsersIcon, FileTextIcon } from '@/public/icons'
 
 interface UniversityCardProps {

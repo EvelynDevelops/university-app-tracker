@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { ChevronDownIcon } from '@/public/icons'
 import StatusEditor from '@/components/applications/StatusEditor'
 import RequirementsChecklist from '@/components/applications/RequirementsChecklist'

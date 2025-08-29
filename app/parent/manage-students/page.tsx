@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/layouts/DashboardLayout'
 import { getLinkedStudents, Student } from '@/lib/services/parentService'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { supabaseBrowser } from '@/lib/supabase/helpers'
 import LinkStudentModal from '@/components/modals/LinkStudentModal'
 
