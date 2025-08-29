@@ -1,52 +1,82 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { supabaseServer } from '@/lib/supabase/server'
+import { 
+  withRole, 
+  AuthenticatedRequest, 
+  successResponse,
+  APIError,
+  handleAPIError
+} from '@/lib/api/middleware'
+import { 
+  validateBody 
+} from '@/lib/api/validation'
 
-export async function POST(req: NextRequest) {
+// 验证模式
+const createNoteSchema = {
+  application_id: { required: true, type: 'uuid' as const },
+  note: { required: true, type: 'string' as const, maxLength: 2000 }
+}
+
+/**
+ * POST /api/v1/parent/notes
+ * Create a new note for an application (Parent only)
+ * 
+ * Request Body:
+ * {
+ *   application_id: string,
+ *   note: string
+ * }
+ */
+export const POST = withRole('parent')(async (req: AuthenticatedRequest) => {
   try {
-    const supabase = supabaseServer()
-    const { data: { user }, error: authErr } = await supabase.auth.getUser()
-    if (authErr || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    // Only parents can post notes (optional role check)
-    const { data: profile } = await supabase.from('profiles').select('role').eq('user_id', user.id).single()
-    if (profile?.role !== 'parent') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
     const body = await req.json()
-    const { application_id, note } = body || {}
-    if (!application_id || !note) return NextResponse.json({ error: 'application_id and note are required' }, { status: 400 })
+    
+    // Validate request body
+    const validatedData = validateBody(body, createNoteSchema)
+
+    const supabase = supabaseServer()
 
     // Verify parent has access to this application
     const { data: application, error: appError } = await supabase
       .from('applications')
       .select('student_id')
-      .eq('id', application_id)
+      .eq('id', validatedData.application_id)
       .single()
 
     if (appError || !application) {
-      return NextResponse.json({ error: 'Application not found' }, { status: 404 })
+      throw new APIError(404, 'Application not found')
     }
 
     // Check if parent is linked to the student
     const { data: link, error: linkError } = await supabase
       .from('parent_links')
       .select('student_user_id')
-      .eq('parent_user_id', user.id)
+      .eq('parent_user_id', req.user.id)
       .eq('student_user_id', application.student_id)
       .maybeSingle()
 
     if (linkError || !link) {
-      return NextResponse.json({ error: 'Access denied to this application' }, { status: 403 })
+      throw new APIError(403, 'Access denied to this application')
     }
 
+    // Create the note
     const { data, error } = await supabase
       .from('parent_notes')
-      .insert({ application_id, parent_user_id: user.id, note })
+      .insert({ 
+        application_id: validatedData.application_id, 
+        parent_user_id: req.user.id, 
+        note: validatedData.note 
+      })
       .select()
       .single()
-    if (error) return NextResponse.json({ error: 'Failed to create note' }, { status: 500 })
-    return NextResponse.json({ data }, { status: 201 })
-  } catch (e) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+      
+    if (error) {
+      throw new APIError(500, 'Failed to create note')
+    }
+    
+    return successResponse(data, 'Note created successfully', 201)
+  } catch (error) {
+    return handleAPIError(error)
   }
-}
+})
 

@@ -1,5 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { supabaseServer } from '@/lib/supabase/server'
+import { 
+  withAuthWithParams, 
+  AuthenticatedRequest, 
+  successResponse,
+  validateUUID,
+  APIError,
+  handleAPIError
+} from '@/lib/api/middleware'
 
 /**
  * GET /api/v1/universities/[id]
@@ -10,20 +18,16 @@ import { supabaseServer } from '@/lib/supabase/server'
  * 
  * Example: /api/v1/universities/508d46ce-c832-4aa2-879d-d9ed1cfd58b1
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const GET = withAuthWithParams<{ id: string }>(async (
+  req: AuthenticatedRequest,
+  params: { id: string }
+) => {
   try {
     const { id } = params
 
     // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    if (!uuidRegex.test(id)) {
-      return NextResponse.json(
-        { error: 'Invalid university ID format' },
-        { status: 400 }
-      )
+    if (!validateUUID(id)) {
+      throw new APIError(400, 'Invalid university ID format')
     }
 
     // Initialize Supabase client
@@ -39,29 +43,15 @@ export async function GET(
     // Handle database errors
     if (error) {
       if (error.code === 'PGRST116') {
-        return NextResponse.json(
-          { error: 'University not found' },
-          { status: 404 }
-        )
+        throw new APIError(404, 'University not found')
       }
-      console.error('Database error:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch university' },
-        { status: 500 }
-      )
+      throw new APIError(500, 'Failed to fetch university')
     }
 
     // Return successful response
-    return NextResponse.json({
-      data: university
-    })
+    return successResponse(university)
 
   } catch (error) {
-    // Handle unexpected errors
-    console.error('Unexpected error in university API:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleAPIError(error)
   }
-}
+})

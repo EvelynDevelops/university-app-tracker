@@ -1,46 +1,65 @@
-import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { NextRequest } from 'next/server'
+import { supabaseServer } from '@/lib/supabase/server'
+import { 
+  withRole, 
+  AuthenticatedRequest, 
+  successResponse,
+  APIError,
+  handleAPIError
+} from '@/lib/api/middleware'
+import { 
+  validateBody, 
+  validationSchemas 
+} from '@/lib/api/validation'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables')
-}
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-export async function POST(req: Request) {
+/**
+ * POST /api/v1/student/profiles
+ * Create or update a student profile
+ * 
+ * Request Body:
+ * {
+ *   user_id: string,
+ *   role: "student" | "parent",
+ *   first_name?: string,
+ *   last_name?: string,
+ *   email?: string
+ * }
+ */
+export const POST = withRole('student')(async (req: AuthenticatedRequest) => {
   try {
-    const body = await req.json() as {
-      user_id: string
-      role: "student" | "parent"
-      first_name?: string
-      last_name?: string
-      email?: string
+    const body = await req.json()
+    
+    // Validate request body
+    const validatedData = validateBody(body, validationSchemas.createProfile)
+    
+    // Ensure the user can only create/update their own profile
+    if (validatedData.user_id !== req.user.id) {
+      throw new APIError(403, 'You can only create/update your own profile')
     }
-    if (!body?.user_id || !body?.role) {
-      return NextResponse.json({ error: "user_id and role are required" }, { status: 400 })
-    }
+
+    const supabase = supabaseServer()
 
     const { data, error } = await supabase
       .from("profiles")
       .upsert(
         {
-          user_id: body.user_id,
-          role: body.role,
-          first_name: body.first_name ?? null,
-          last_name: body.last_name ?? null,
-          email: body.email ?? null,
+          user_id: validatedData.user_id,
+          role: validatedData.role,
+          first_name: validatedData.first_name ?? null,
+          last_name: validatedData.last_name ?? null,
+          email: validatedData.email ?? null,
         },
         { onConflict: "user_id" }
       )
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-    return NextResponse.json(data)
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? "Unexpected error" }, { status: 500 })
+    if (error) {
+      throw new APIError(400, error.message)
+    }
+    
+    return successResponse(data, 'Profile created/updated successfully', 201)
+  } catch (error) {
+    return handleAPIError(error)
   }
-} 
+}) 

@@ -1,5 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { supabaseServer } from '@/lib/supabase/server'
+import { 
+  withAuthWithParams, 
+  AuthenticatedRequest, 
+  successResponse,
+  validateUUID,
+  APIError,
+  handleAPIError
+} from '@/lib/api/middleware'
+import { 
+  validateBody, 
+  validationSchemas 
+} from '@/lib/api/validation'
+import { dbService } from '@/lib/api/database'
 
 /**
  * GET /api/v1/applications/[id]
@@ -10,77 +23,33 @@ import { supabaseServer } from '@/lib/supabase/server'
  * 
  * Example: /api/v1/applications/123e4567-e89b-12d3-a456-426614174000
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const GET = withAuthWithParams<{ id: string }>(async (
+  req: AuthenticatedRequest,
+  params: { id: string }
+) => {
   try {
     const { id } = params
 
     // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    if (!uuidRegex.test(id)) {
-      return NextResponse.json(
-        { error: 'Invalid application ID format' },
-        { status: 400 }
-      )
+    if (!validateUUID(id)) {
+      throw new APIError(400, 'Invalid application ID format')
     }
 
-    // Initialize Supabase client
-    const supabase = supabaseServer()
-
-    // Fetch application details with university information
-    const { data: application, error } = await supabase
-      .from('applications')
-      .select(`
-        *,
-        universities (
-          id,
-          name,
-          city,
-          state,
-          country,
-          us_news_ranking,
-          acceptance_rate,
-          application_system,
-          tuition_in_state,
-          tuition_out_state,
-          application_fee,
-          deadlines
-        )
-      `)
-      .eq('id', id)
-      .single()
-
-    // Handle database errors
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json(
-          { error: 'Application not found' },
-          { status: 404 }
-        )
-      }
-      console.error('Database error:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch application' },
-        { status: 500 }
-      )
+    // Check access permissions
+    const hasAccess = await dbService.checkApplicationAccess(req.user.id, id, req.profile.role)
+    if (!hasAccess) {
+      throw new APIError(403, 'Access denied to this application')
     }
 
-    // Return successful response
-    return NextResponse.json({
-      data: application
-    })
+    // Get application details
+    const application = await dbService.getApplicationWithUniversity(id)
+
+    return successResponse(application)
 
   } catch (error) {
-    // Handle unexpected errors
-    console.error('Unexpected error in application API:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleAPIError(error)
   }
-}
+})
 
 /**
  * PUT /api/v1/applications/[id]
@@ -97,35 +66,47 @@ export async function GET(
  *   deadline?: string
  * }
  */
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const PUT = withAuthWithParams<{ id: string }>(async (
+  req: AuthenticatedRequest,
+  params: { id: string }
+) => {
   try {
     const { id } = params
-    const body = await request.json()
+    const body = await req.json()
 
     // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    if (!uuidRegex.test(id)) {
-      return NextResponse.json(
-        { error: 'Invalid application ID format' },
-        { status: 400 }
-      )
+    if (!validateUUID(id)) {
+      throw new APIError(400, 'Invalid application ID format')
     }
 
-    // Initialize Supabase client
+    // Validate request body
+    const validatedData = validateBody(body, validationSchemas.updateApplication) as {
+      status?: string
+      submitted_date?: string
+      decision_date?: string
+      decision_type?: string
+      notes?: string
+      application_type?: string
+      deadline?: string
+    }
+
+    // Check access permissions
+    const hasAccess = await dbService.checkApplicationAccess(req.user.id, id, req.profile.role)
+    if (!hasAccess) {
+      throw new APIError(403, 'Access denied to this application')
+    }
+
     const supabase = supabaseServer()
 
     // Build update payload (only include provided fields)
     const updatePayload: Record<string, any> = {}
-    if (body.status !== undefined) updatePayload.status = body.status
-    if (body.submitted_date !== undefined) updatePayload.submitted_date = body.submitted_date
-    if (body.decision_date !== undefined) updatePayload.decision_date = body.decision_date
-    if (body.decision_type !== undefined) updatePayload.decision_type = body.decision_type
-    if (body.notes !== undefined) updatePayload.notes = body.notes
-    if (body.application_type !== undefined) updatePayload.application_type = body.application_type
-    if (body.deadline !== undefined) updatePayload.deadline = body.deadline
+    if (validatedData.status !== undefined) updatePayload.status = validatedData.status
+    if (validatedData.submitted_date !== undefined) updatePayload.submitted_date = validatedData.submitted_date
+    if (validatedData.decision_date !== undefined) updatePayload.decision_date = validatedData.decision_date
+    if (validatedData.decision_type !== undefined) updatePayload.decision_type = validatedData.decision_type
+    if (validatedData.notes !== undefined) updatePayload.notes = validatedData.notes
+    if (validatedData.application_type !== undefined) updatePayload.application_type = validatedData.application_type
+    if (validatedData.deadline !== undefined) updatePayload.deadline = validatedData.deadline
 
     // Update application
     const { data: updatedRow, error } = await supabase
@@ -136,54 +117,18 @@ export async function PUT(
       .single()
 
     if (error) {
-      console.error('Database error:', error)
-      return NextResponse.json(
-        { error: 'Failed to update application' },
-        { status: 500 }
-      )
+      throw new APIError(500, 'Failed to update application')
     }
 
     // Re-fetch with joined university details to keep response shape consistent with GET
-    const { data: applicationWithUniversity, error: refetchError } = await supabase
-      .from('applications')
-      .select(`
-        *,
-        universities (
-          id,
-          name,
-          city,
-          state,
-          country,
-          us_news_ranking,
-          acceptance_rate,
-          application_system,
-          tuition_in_state,
-          tuition_out_state,
-          application_fee,
-          deadlines
-        )
-      `)
-      .eq('id', id)
-      .single()
+    const applicationWithUniversity = await dbService.getApplicationWithUniversity(id)
 
-    if (refetchError) {
-      console.error('Refetch error after update:', refetchError)
-      return NextResponse.json({
-        message: 'Application updated, but failed to include university details',
-        data: updatedRow
-      })
-    }
-
-    return NextResponse.json({
-      message: 'Application updated successfully',
-      data: applicationWithUniversity
-    })
+    return successResponse(
+      applicationWithUniversity,
+      'Application updated successfully'
+    )
 
   } catch (error) {
-    console.error('Unexpected error in application PUT API:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleAPIError(error)
   }
-}
+})
