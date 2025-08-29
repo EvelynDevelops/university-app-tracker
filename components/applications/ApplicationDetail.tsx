@@ -33,6 +33,8 @@ export default function ApplicationDetail({ applicationId }: { applicationId: st
   const [application, setApplication] = useState<ApplicationDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [parentNotes, setParentNotes] = useState<any[]>([])
+  const [loadingNotes, setLoadingNotes] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -50,6 +52,26 @@ export default function ApplicationDetail({ applicationId }: { applicationId: st
       }
     })()
   }, [applicationId])
+
+  useEffect(() => {
+    loadParentNotes()
+  }, [applicationId])
+
+  const loadParentNotes = async () => {
+    try {
+      setLoadingNotes(true)
+      const response = await fetch(`/api/v1/applications/${applicationId}/parent-notes`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setParentNotes(data.notes || [])
+      }
+    } catch (e) {
+      console.error('Error loading parent notes:', e)
+    } finally {
+      setLoadingNotes(false)
+    }
+  }
 
   const formatDate = (d?: string | null) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set'
   const getStatusColor = (s: string) => ({
@@ -174,6 +196,36 @@ export default function ApplicationDetail({ applicationId }: { applicationId: st
               value={{ application_type: application.application_type, deadline: application.deadline, notes: application.notes || '' }}
               onUpdated={(next) => setApplication((prev) => prev ? ({ ...prev, ...next }) as any : prev)}
             />
+          </div>
+
+          {/* Parent Notes */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-xl font-semibold mb-4">Parent Notes</h2>
+            {loadingNotes ? (
+              <div className="text-gray-600 dark:text-gray-400">Loading notes...</div>
+            ) : parentNotes.length > 0 ? (
+              <div className="space-y-4">
+                {parentNotes.map((note) => (
+                  <div key={note.id} className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border-l-4 border-blue-500">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                        {note.profiles?.first_name} {note.profiles?.last_name}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(note.created_at).toLocaleDateString()} at {new Date(note.created_at).toLocaleTimeString()}
+                      </span>
+                    </div>
+                    <p className="text-gray-900 dark:text-white whitespace-pre-wrap text-sm">
+                      {note.note}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-600 dark:text-gray-400 text-sm">
+                No notes from parents yet.
+              </div>
+            )}
           </div>
         </div>
       </div>

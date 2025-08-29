@@ -15,6 +15,29 @@ export async function POST(req: NextRequest) {
     const { application_id, note } = body || {}
     if (!application_id || !note) return NextResponse.json({ error: 'application_id and note are required' }, { status: 400 })
 
+    // Verify parent has access to this application
+    const { data: application, error: appError } = await supabase
+      .from('applications')
+      .select('student_id')
+      .eq('id', application_id)
+      .single()
+
+    if (appError || !application) {
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 })
+    }
+
+    // Check if parent is linked to the student
+    const { data: link, error: linkError } = await supabase
+      .from('parent_links')
+      .select('student_user_id')
+      .eq('parent_user_id', user.id)
+      .eq('student_user_id', application.student_id)
+      .maybeSingle()
+
+    if (linkError || !link) {
+      return NextResponse.json({ error: 'Access denied to this application' }, { status: 403 })
+    }
+
     const { data, error } = await supabase
       .from('parent_notes')
       .insert({ application_id, parent_user_id: user.id, note })

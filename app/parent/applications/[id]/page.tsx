@@ -36,9 +36,12 @@ export default function ParentApplicationDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [sendingNote, setSendingNote] = useState(false)
+  const [parentNotes, setParentNotes] = useState<any[]>([])
+  const [loadingNotes, setLoadingNotes] = useState(false)
 
   useEffect(() => {
     loadApplication()
+    loadParentNotes()
   }, [applicationId])
 
   const loadApplication = async () => {
@@ -102,6 +105,22 @@ export default function ParentApplicationDetailPage() {
     }
   }
 
+  const loadParentNotes = async () => {
+    try {
+      setLoadingNotes(true)
+      const response = await fetch(`/api/v1/applications/${applicationId}/parent-notes`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setParentNotes(data.notes || [])
+      }
+    } catch (e) {
+      console.error('Error loading parent notes:', e)
+    } finally {
+      setLoadingNotes(false)
+    }
+  }
+
   const sendNote = async () => {
     if (!note.trim() || !application) return
 
@@ -115,10 +134,8 @@ export default function ParentApplicationDetailPage() {
         .from('parent_notes')
         .insert({
           parent_user_id: user.id,
-          student_user_id: application.student_id,
           application_id: application.id,
-          message: note.trim(),
-          is_read: false
+          note: note.trim()
         })
 
       if (error) {
@@ -127,7 +144,8 @@ export default function ParentApplicationDetailPage() {
       }
 
       setNote('')
-      // You could show a success message here
+      // Reload notes after sending
+      await loadParentNotes()
     } catch (e) {
       console.error('Error sending note:', e)
     } finally {
@@ -298,6 +316,35 @@ export default function ParentApplicationDetailPage() {
                   {sendingNote ? 'Sending...' : 'Send Note'}
                 </button>
               </div>
+            </div>
+
+            {/* Parent Notes History */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Your Notes History
+              </h2>
+              {loadingNotes ? (
+                <div className="text-gray-600 dark:text-gray-400">Loading notes...</div>
+              ) : parentNotes.length > 0 ? (
+                <div className="space-y-4">
+                  {parentNotes.map((note) => (
+                    <div key={note.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(note.created_at).toLocaleDateString()} at {new Date(note.created_at).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
+                        {note.note}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-gray-600 dark:text-gray-400">
+                  No notes sent yet.
+                </div>
+              )}
             </div>
           </div>
 
