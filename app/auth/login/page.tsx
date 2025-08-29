@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import LoginCard from '@/components/auth/LoginCard'
 
 export default function LoginPage() {
@@ -26,7 +27,9 @@ export default function LoginPage() {
           </div>
 
           {/* Login Card */}
-          <LoginCard />
+          <Suspense fallback={<div className="text-center py-8">Loading...</div>}>
+            <LoginCard />
+          </Suspense>
         </div>
       </div>
 
