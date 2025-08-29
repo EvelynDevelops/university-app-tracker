@@ -1,4 +1,7 @@
-import { FilterValues } from '@/components/universities/UniversityFilterBar'
+import { FilterValues as OriginalFilterValues } from '@/components/universities/UniversityFilterBar'
+
+// Re-export FilterValues with optional fields for use in other files
+export type FilterValues = Partial<OriginalFilterValues>
 
 // Types
 export interface UIUniversity {

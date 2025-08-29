@@ -325,6 +325,54 @@ class ParentService {
       }
     }
   }
+
+  async postParentNote(applicationId: string, note: string): Promise<{
+    success: boolean
+    error?: string
+  }> {
+    try {
+      const user = await this.getCurrentUser()
+      const supabase = supabaseBrowser()
+
+      // Verify parent has access to this application
+      const { data: application, error: appError } = await supabase
+        .from('applications')
+        .select('student_id')
+        .eq('id', applicationId)
+        .single()
+
+      if (appError || !application) {
+        return { success: false, error: 'Application not found' }
+      }
+
+      // Check if parent is linked to the student
+      const { data: link, error: linkError } = await supabase
+        .from('parent_links')
+        .select('student_user_id')
+        .eq('parent_user_id', user.id)
+        .eq('student_user_id', application.student_id)
+        .maybeSingle()
+
+      if (linkError || !link) {
+        return { success: false, error: 'Access denied to this application' }
+      }
+
+      // Post the note
+      const { data, error } = await supabase
+        .from('parent_notes')
+        .insert({ application_id: applicationId, parent_user_id: user.id, note: note.trim() })
+        .select()
+        .single()
+
+      if (error) {
+        return { success: false, error: this.handleError(error, 'Post parent note') }
+      }
+
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: this.handleError(error, 'postParentNote') }
+    }
+  }
 }
 
 // Export a singleton instance
@@ -335,6 +383,7 @@ export const getLinkedStudents = () => parentService.getLinkedStudents()
 export const getStudentApplications = (studentId: string) => parentService.getStudentApplications(studentId)
 export const getStudentApplication = (applicationId: string) => parentService.getStudentApplication(applicationId)
 export const checkParentOnboarding = () => parentService.checkParentOnboarding()
+export const postParentNote = (applicationId: string, note: string) => parentService.postParentNote(applicationId, note)
 
 // Export the service class for advanced usage
 export { ParentService }

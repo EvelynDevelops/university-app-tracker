@@ -49,11 +49,13 @@ export default function ParentUniversitiesPage() {
         setUniversities(result.universities)
         
         if (result.pagination) {
+          const totalPages = Math.ceil(result.pagination.total / result.pagination.limit)
+          const currentPage = Math.floor(result.pagination.offset / result.pagination.limit) + 1
           setPagination({
-            currentPage: result.pagination.currentPage,
-            totalPages: result.pagination.totalPages,
-            totalItems: result.pagination.totalItems,
-            itemsPerPage: result.pagination.itemsPerPage
+            currentPage,
+            totalPages,
+            totalItems: result.pagination.total,
+            itemsPerPage: result.pagination.limit
           })
         }
       }
@@ -71,34 +73,29 @@ export default function ParentUniversitiesPage() {
       const searchLower = filters.search.toLowerCase()
       filtered = filtered.filter(uni => 
         uni.name.toLowerCase().includes(searchLower) ||
-        uni.city?.toLowerCase().includes(searchLower) ||
-        uni.state?.toLowerCase().includes(searchLower) ||
-        uni.country?.toLowerCase().includes(searchLower)
+        uni.location.toLowerCase().includes(searchLower)
       )
     }
 
-    if (filters.country) {
-      filtered = filtered.filter(uni => uni.country === filters.country)
+    if (filters.location && filters.location !== 'All Locations') {
+      filtered = filtered.filter(uni => uni.location.includes(filters.location!))
     }
 
-    if (filters.state) {
-      filtered = filtered.filter(uni => uni.state === filters.state)
+    if (filters.ranking && filters.ranking !== 'All Rankings') {
+      const rankingNum = parseInt(filters.ranking!.replace('Top ', ''))
+      filtered = filtered.filter(uni => uni.ranking <= rankingNum)
     }
 
-    if (filters.rankingRange) {
-      const [min, max] = filters.rankingRange.split('-').map(Number)
+    if (filters.acceptanceRate && filters.acceptanceRate !== 'All Acceptance Rates') {
+      const rateRange = filters.acceptanceRate!
       filtered = filtered.filter(uni => {
-        if (!uni.us_news_ranking) return false
-        return uni.us_news_ranking >= min && uni.us_news_ranking <= max
-      })
-    }
-
-    if (filters.acceptanceRateRange) {
-      const [min, max] = filters.acceptanceRateRange.split('-').map(Number)
-      filtered = filtered.filter(uni => {
-        if (!uni.acceptance_rate) return false
-        const rate = uni.acceptance_rate * 100
-        return rate >= min && rate <= max
+        const rate = uni.acceptanceRate
+        if (rateRange === 'Under 5%') return rate < 5
+        if (rateRange === '5% - 10%') return rate >= 5 && rate < 10
+        if (rateRange === '10% - 20%') return rate >= 10 && rate < 20
+        if (rateRange === '20% - 50%') return rate >= 20 && rate < 50
+        if (rateRange === 'Over 50%') return rate >= 50
+        return true
       })
     }
 
@@ -137,8 +134,8 @@ export default function ParentUniversitiesPage() {
         </div>
 
         <UniversitiesFilterSection
-          filters={filters}
-          onFilterChange={handleFilterChange}
+          onFiltersChange={handleFilterChange}
+          onSearch={handleFilterChange}
         />
 
         {error ? (

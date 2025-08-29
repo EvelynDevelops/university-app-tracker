@@ -38,12 +38,8 @@ export default function ParentNotificationsBell() {
           id,
           note,
           created_at,
-          applications (
-            id,
-            profiles!applications_student_id_fkey (
-              first_name,
-              last_name
-            )
+          applications!parent_notes_application_id_fkey (
+            student_id
           )
         `)
         .eq('parent_user_id', user.id)
@@ -61,7 +57,7 @@ export default function ParentNotificationsBell() {
         title: 'Student Response',
         message: note.note,
         date: note.created_at,
-        student_name: `${note.applications?.profiles?.first_name || ''} ${note.applications?.profiles?.last_name || ''}`.trim()
+        student_name: 'Student' // Simplified for now
       }))
 
       setNotifications(formattedNotifications)
