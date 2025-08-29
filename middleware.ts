@@ -3,10 +3,11 @@ import type { NextRequest } from "next/server"
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+  try {
+    const res = NextResponse.next()
+    const supabase = createMiddlewareClient({ req, res })
 
-  const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
 
   const protectedPaths = [/^\/student/, /^\/parent/, /^\/universities/]
   const isProtected = protectedPaths.some((r) => r.test(req.nextUrl.pathname))
@@ -46,9 +47,14 @@ export async function middleware(req: NextRequest) {
     }
 
 
-  }
+    }
 
-  return res
+    return res
+  } catch (error) {
+    console.error('Middleware error:', error)
+    // Return the original request if middleware fails
+    return NextResponse.next()
+  }
 }
 
 export const config = {
