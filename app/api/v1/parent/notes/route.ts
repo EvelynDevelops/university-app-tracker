@@ -1,8 +1,6 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase/server'
 import { 
-  withRole, 
-  AuthenticatedRequest, 
   successResponse,
   APIError,
   handleAPIError
@@ -27,14 +25,36 @@ const createNoteSchema = {
  *   note: string
  * }
  */
-export const POST = withRole('parent')(async (req: AuthenticatedRequest) => {
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json()
+    // 认证
+    const supabase = supabaseServer()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      throw new APIError(401, 'Unauthorized')
+    }
+
+    // 获取用户资料
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      throw new APIError(403, 'Profile not found')
+    }
+
+    // 角色验证
+    if (profile.role !== 'parent') {
+      throw new APIError(403, 'Access denied. Parent role required.')
+    }
+
+    const body = await request.json()
     
     // Validate request body
     const validatedData = validateBody(body, createNoteSchema)
-
-    const supabase = supabaseServer()
 
     // Verify parent has access to this application
     const { data: application, error: appError } = await supabase
@@ -51,7 +71,7 @@ export const POST = withRole('parent')(async (req: AuthenticatedRequest) => {
     const { data: link, error: linkError } = await supabase
       .from('parent_links')
       .select('student_user_id')
-      .eq('parent_user_id', req.user.id)
+      .eq('parent_user_id', user.id)
       .eq('student_user_id', application.student_id)
       .maybeSingle()
 
@@ -64,7 +84,7 @@ export const POST = withRole('parent')(async (req: AuthenticatedRequest) => {
       .from('parent_notes')
       .insert({ 
         application_id: validatedData.application_id, 
-        parent_user_id: req.user.id, 
+        parent_user_id: user.id, 
         note: validatedData.note 
       })
       .select()
@@ -78,5 +98,5 @@ export const POST = withRole('parent')(async (req: AuthenticatedRequest) => {
   } catch (error) {
     return handleAPIError(error)
   }
-})
+}
 

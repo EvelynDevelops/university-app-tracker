@@ -1,7 +1,5 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { 
-  withAuth, 
-  AuthenticatedRequest, 
   paginatedResponse,
   APIError,
   handleAPIError
@@ -11,6 +9,7 @@ import {
   validationSchemas 
 } from '@/lib/api/validation'
 import { dbService } from '@/lib/api/database'
+import { supabaseServer } from '@/lib/supabase/server'
 
 // Define the structure for university data
 interface University {
@@ -44,11 +43,30 @@ interface University {
  * 
  * Example: /api/v1/universities?q=MIT&country=USA&ranking_max=50&limit=10
  */
-export const GET = withAuth(async (req: AuthenticatedRequest) => {
+export async function GET(request: NextRequest) {
   try {
+    // 认证
+    const supabase = supabaseServer()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      throw new APIError(401, 'Unauthorized')
+    }
+
+    // 获取用户资料
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      throw new APIError(403, 'Profile not found')
+    }
+
     // Parse and validate query parameters
     const validatedParams = validateQueryParams(
-      req.nextUrl.searchParams,
+      request.nextUrl.searchParams,
       validationSchemas.universitySearch
     ) as {
       q?: string
@@ -107,5 +125,5 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
   } catch (error) {
     return handleAPIError(error)
   }
-})
+}
 

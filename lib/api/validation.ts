@@ -70,19 +70,19 @@ export function validateBody<T extends Record<string, any>>(
     // 应用验证规则
     if (rule.type === 'string') {
       validationRules.string(value, key, rule.maxLength)
-      validated[key as keyof T] = value
+      ;(validated as any)[key] = value
     } else if (rule.type === 'number') {
       validationRules.number(value, key, rule.min, rule.max)
-      validated[key as keyof T] = typeof value === 'string' ? parseFloat(value) : value
+      ;(validated as any)[key] = typeof value === 'string' ? parseFloat(value) : value
     } else if (rule.type === 'uuid') {
       validationRules.uuid(value, key)
-      validated[key as keyof T] = value
+      ;(validated as any)[key] = value
     } else if (rule.type === 'date') {
       validationRules.date(value, key)
-      validated[key as keyof T] = value
+      ;(validated as any)[key] = value
     } else if (rule.type === 'enum') {
       validationRules.enum(value, key, rule.allowedValues!)
-      validated[key as keyof T] = value
+      ;(validated as any)[key] = value
     }
   }
   
@@ -108,12 +108,12 @@ export function validateQueryParams<T extends Record<string, any>>(
     // 应用验证规则
     if (rule.type === 'string') {
       validationRules.string(value, key, rule.maxLength)
-      validated[key as keyof T] = value
+      ;(validated as any)[key] = value
     } else if (rule.type === 'number') {
       validationRules.number(value, key, rule.min, rule.max)
-      validated[key as keyof T] = parseFloat(value)
+      ;(validated as any)[key] = parseFloat(value)
     } else if (rule.type === 'boolean') {
-      validated[key as keyof T] = value === 'true'
+      ;(validated as any)[key] = value === 'true'
     }
   }
   

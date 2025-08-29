@@ -1,12 +1,11 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase/server'
 import { 
-  withAuthWithParams, 
-  AuthenticatedRequest, 
   successResponse,
   validateUUID,
   APIError,
-  handleAPIError
+  handleAPIError,
+  AuthenticatedRequest
 } from '@/lib/api/middleware'
 import { 
   validateBody, 
@@ -23,11 +22,35 @@ import { dbService } from '@/lib/api/database'
  * 
  * Example: /api/v1/applications/123e4567-e89b-12d3-a456-426614174000
  */
-export const GET = withAuthWithParams<{ id: string }>(async (
-  req: AuthenticatedRequest,
-  params: { id: string }
-) => {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
+    // 认证
+    const supabase = supabaseServer()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      throw new APIError(401, 'Unauthorized')
+    }
+
+    // 获取用户资料
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      throw new APIError(403, 'Profile not found')
+    }
+
+    // 角色验证
+    if (profile.role !== 'student') {
+      throw new APIError(403, 'Access denied. Student role required.')
+    }
+
     const { id } = params
 
     // Validate UUID format
@@ -36,7 +59,7 @@ export const GET = withAuthWithParams<{ id: string }>(async (
     }
 
     // Check access permissions
-    const hasAccess = await dbService.checkApplicationAccess(req.user.id, id, req.profile.role)
+    const hasAccess = await dbService.checkApplicationAccess(user.id, id, profile.role)
     if (!hasAccess) {
       throw new APIError(403, 'Access denied to this application')
     }
@@ -49,7 +72,7 @@ export const GET = withAuthWithParams<{ id: string }>(async (
   } catch (error) {
     return handleAPIError(error)
   }
-})
+}
 
 /**
  * PUT /api/v1/applications/[id]
@@ -66,13 +89,37 @@ export const GET = withAuthWithParams<{ id: string }>(async (
  *   deadline?: string
  * }
  */
-export const PUT = withAuthWithParams<{ id: string }>(async (
-  req: AuthenticatedRequest,
-  params: { id: string }
-) => {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
+    // 认证
+    const supabase = supabaseServer()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      throw new APIError(401, 'Unauthorized')
+    }
+
+    // 获取用户资料
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      throw new APIError(403, 'Profile not found')
+    }
+
+    // 角色验证
+    if (profile.role !== 'student') {
+      throw new APIError(403, 'Access denied. Student role required.')
+    }
+
     const { id } = params
-    const body = await req.json()
+    const body = await request.json()
 
     // Validate UUID format
     if (!validateUUID(id)) {
@@ -91,12 +138,10 @@ export const PUT = withAuthWithParams<{ id: string }>(async (
     }
 
     // Check access permissions
-    const hasAccess = await dbService.checkApplicationAccess(req.user.id, id, req.profile.role)
+    const hasAccess = await dbService.checkApplicationAccess(user.id, id, profile.role)
     if (!hasAccess) {
       throw new APIError(403, 'Access denied to this application')
     }
-
-    const supabase = supabaseServer()
 
     // Build update payload (only include provided fields)
     const updatePayload: Record<string, any> = {}
@@ -131,4 +176,4 @@ export const PUT = withAuthWithParams<{ id: string }>(async (
   } catch (error) {
     return handleAPIError(error)
   }
-})
+}
